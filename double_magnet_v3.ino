@@ -13,6 +13,8 @@ TODO:
 
 // Includes
 #include <AccelStepper.h>
+#include <Wire.h>
+#include "Adafruit_MLX90393.h"
 
 // PINS
 const int stepPins[] = {2, 4, 6, 8};
@@ -27,6 +29,7 @@ boolean validMsg = false; // If the parser finds a valid message, this flag is f
 unsigned long currentTime;
 unsigned long previousTime;
 const unsigned int timeInterval = 200; // milliseconds between position reports
+float mag_x, mag_y, mag_z
 
 // Motor control
 AccelStepper Motor_A(AccelStepper::DRIVER, stepPins[0], dirPins[0]);
@@ -37,6 +40,9 @@ byte controlMode = 0;
 long motorPositions[motorCount] = {}; // stores the target motor positions relative to the startup state
 byte activeMotor; // The motor commanded to move by the most recent message
 long steps; // The number of steps commanded to move by the most recent message
+
+// Magnetic sensor control
+Adafruit_MLX90393 magSensor = Adafruit_MLX90393();
 
 //---------------------------------
 //---------------------------------
@@ -60,7 +66,11 @@ void setup() {
 
   // Set up serial
   Serial.begin(9600);
-  Serial.println("Arduino is ready");
+  Serial.println("Serial ready");
+
+  if (sensor.begin()) {
+    Serial.println("Found a MLX90393 sensor");
+  }
 
   // Start timer
   currentTime = millis();
@@ -138,11 +148,16 @@ void loop() {
     newMsg = false;
   }
 
-  //Run motors
+  // Run motors
   Motor_A.run();
   Motor_B.run();
   Motor_C.run();
   Motor_D.run();
+
+  // Take field measurement
+  if (sensor.readData(&mag_x, &mag_y, &mag_z)) {
+    // TODO: take actions based on measured field
+  }
 
   // Report position every desired time period
   currentTime = millis();
