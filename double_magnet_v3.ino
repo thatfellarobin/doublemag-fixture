@@ -4,6 +4,10 @@ Author: Robin Liu
 This sketch controls four stepper motors through EasyDriver or similar driver boards.
 It listens for serial input containing instructions for running the motors and executes those instructions.
 
+Notes on direction:
+- Positive # of steps rotates the motor shaft clockwise as viewed from the motor body.
+- For the linear axis, clockwise rotation moves the magnet away from the workspace
+
 Attribution:
 - Code for serial interfacing from here: https://forum.arduino.cc/index.php?topic=288234.0
 
@@ -20,6 +24,7 @@ TODO:
 const int stepPins[] = {2, 4, 6, 8};
 const int dirPins[] = {3, 5, 7, 9};
 const int motorCount = 4;
+const int limitPins[] = {10, 11};
 
 // Serial message variables
 const byte msgNumChars = 32;
@@ -28,8 +33,8 @@ boolean newMsg = false;
 boolean validMsg = false; // If the parser finds a valid message, this flag is flipped true
 unsigned long currentTime;
 unsigned long previousTime;
-const unsigned int timeInterval = 200; // milliseconds between position reports
-float mag_x, mag_y, mag_z
+const unsigned int timeInterval = 100; // milliseconds between position reports
+float mag_x, mag_y, mag_z; // Magnetic measurement value
 
 // Motor control
 AccelStepper Motor_A(AccelStepper::DRIVER, stepPins[0], dirPins[0]);
@@ -37,9 +42,12 @@ AccelStepper Motor_B(AccelStepper::DRIVER, stepPins[1], dirPins[1]);
 AccelStepper Motor_C(AccelStepper::DRIVER, stepPins[2], dirPins[2]);
 AccelStepper Motor_D(AccelStepper::DRIVER, stepPins[3], dirPins[3]);
 byte controlMode = 0;
-long motorPositions[motorCount] = {}; // stores the target motor positions relative to the startup state
+long motorStepTarget[motorCount] = {}; // stores the target motor positions relative to the startup state
 byte activeMotor; // The motor commanded to move by the most recent message
-long steps; // The number of steps commanded to move by the most recent message
+
+// The absolute step count target commanded to move by the most recent message.
+// For waypoint control, it's calculated by the external controller.
+long steps;
 
 // Magnetic sensor control
 Adafruit_MLX90393 magSensor = Adafruit_MLX90393();
@@ -59,10 +67,14 @@ void setup() {
   Motor_D.setAcceleration(500);
 
   // Set initial motor target
-  Motor_A.moveTo(motorPositions[0]);
-  Motor_B.moveTo(motorPositions[1]);
-  Motor_C.moveTo(motorPositions[2]);
-  Motor_D.moveTo(motorPositions[3]);
+  Motor_A.moveTo(motorStepTarget[0]);
+  Motor_B.moveTo(motorStepTarget[1]);
+  Motor_C.moveTo(motorStepTarget[2]);
+  Motor_D.moveTo(motorStepTarget[3]);
+
+  // Set up limit switch pins
+  pinMode(limitPins[0], INPUT);
+  pinMode(limitPins[1], INPUT);
 
   // Set up serial
   Serial.begin(9600);
@@ -87,15 +99,23 @@ void loop() {
 
     // If the message is valid, run the motors in accordance with the message
     if (validMsg == true && controlMode == 'W') { // Waypoint control
-      motorPositions[activeMotor] = steps;
-
-      // Using moveTo() instead of move() here because we want to handle the case where a new waypoint is sent before the motor has finished moving to the old one.
-      Motor_A.moveTo(motorPositions[0]);
-      Motor_B.moveTo(motorPositions[1]);
-      Motor_C.moveTo(motorPositions[2]);
-      Motor_D.moveTo(motorPositions[3]);
+      // Make sure the command doesn't exceed the end stop.
+      if (digitalRead((limitPins[0]) && activeMotor == 0 || digitalRead(limitPins[1]) && activeMotor == 3) && steps > 0) {
+        // don't move the motor
+      }
+      else { // No limit pin problems
+        motorStepTarget[activeMotor] = steps;
+        // Using moveTo() instead of move() here because we want to handle the case
+        // where a new waypoint is sent before the motor has finished moving to the old one.
+        // The absolute step target `steps` is calculated by the external controller
+        Motor_A.moveTo(motorStepTarget[0]);
+        Motor_B.moveTo(motorStepTarget[1]);
+        Motor_C.moveTo(motorStepTarget[2]);
+        Motor_D.moveTo(motorStepTarget[3]);
+      }
     }
     else if (validMsg == true && controlMode == 'M') { // Manual control
+      // TODO: Manual control feels very inelegant
       if (steps != 0) { // move forward or backward
         steps = steps * 400; // This value should be tuned based on the max stepper speed and the frequency of messages from the Pi.
         switch (activeMotor) {
@@ -134,12 +154,12 @@ void loop() {
         }
       }
 
-      // Update motorPositions[] with the new target.
+      // Update motorStepTarget[] with the new target.
       // This is necessary so that when you're switching from manual to waypoint control, we update the target correctly.
-      motorPositions[0] = Motor_A.targetPosition();
-      motorPositions[1] = Motor_B.targetPosition();
-      motorPositions[2] = Motor_C.targetPosition();
-      motorPositions[3] = Motor_D.targetPosition();
+      motorStepTarget[0] = Motor_A.targetPosition();
+      motorStepTarget[1] = Motor_B.targetPosition();
+      motorStepTarget[2] = Motor_C.targetPosition();
+      motorStepTarget[3] = Motor_D.targetPosition();
     }
     else {
       // Improper message format
@@ -154,15 +174,12 @@ void loop() {
   Motor_C.run();
   Motor_D.run();
 
-  // Take field measurement
-  if (sensor.readData(&mag_x, &mag_y, &mag_z)) {
-    // TODO: take actions based on measured field
-  }
-
   // Report position every desired time period
   currentTime = millis();
   if (currentTime - previousTime > timeInterval) {
     previousTime = currentTime;
+
+    // Report motor positions
     Serial.print("steps,");
     Serial.print(Motor_A.currentPosition());
     Serial.print(",");
@@ -171,6 +188,25 @@ void loop() {
     Serial.print(Motor_C.currentPosition());
     Serial.print(",");
     Serial.print(Motor_D.currentPosition());
+
+    // Take field measurement
+    if (sensor.readData(&mag_x, &mag_y, &mag_z)) {
+      // Report field conditions
+      Serial.print(",");
+      Serial.print(mag_x);
+      Serial.print(",");
+      Serial.print(mag_y);
+      Serial.print(",");
+      Serial.print(mag_z);
+    }
+    else {
+      // Always the same number of commas regardless of field measurement success
+      Serial.print(",")
+      Serial.print(",")
+      Serial.print(",")
+    }
+
+    // End the message
     Serial.print("\r\n");
   }
 }

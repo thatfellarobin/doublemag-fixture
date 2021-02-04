@@ -1,35 +1,46 @@
 import serial
-from pynput import keyboard
 import numpy as np
-from scipy.io import loadmat
 import os
 import time
 
-# Notes on direction
-# - Positive # of steps rotates the motor shaft clockwise as viewed from the motor body.
-# - For the linear axis, clockwise rotation moves the magnet away from the workspace
+from subthreads import ArduinoManager
 
-# Notes on units
-# - fixture records position in mm
+#=========================================================
+# UI Setup
+#=========================================================
+qtCreatorFile = 'doublemag.ui'
+Ui_MainWindow, QtBaseClass = uic.loadUiType(qtCreatorFile)
 
-# TODO and FIXME:
-# - Optionally revert to safe state upon exit if zeroed
-# - Something broken when the following process was followed:
-#   - Manual control > zeroing > waypoint control > manual control > waypoint control
+#=========================================================
+# Initialize serial connection
+#=========================================================
+arduino_port = '/dev/tty.usbserial-AC00921Z'
+baud = 9600
+ser = serial.Serial(arduino_port, baud, timeout=1)
 
+class DoubleMagnetController(QtGui.QMainWindow, Ui_MainWindow):
+    # Notes on direction
+    # - Positive # of steps rotates the motor shaft clockwise as viewed from the motor body.
+    # - For the linear axis, clockwise rotation moves the magnet away from the workspace
 
-class doubleMagController:
-    def __init__(self, arduino_port='/dev/tty.usbserial-AC00921Z', baud=9600, magnet_mat=None, waypoints=None):
-        # magnet_mat: MATLAB .mat filename with info on magnet position versus field
-        # waypoints: whitespace-delimited file with field magnitude and orientation
+    # Notes on units
+    # - fixture records position in mm
+    def __init__(self):
+        QtGui.QMainWindow.__init__(self)
+        Ui_MainWindow.__init__(self)
+        self.setupUi(self)
 
-        self.ser = serial.Serial(arduino_port, baud, timeout=1) # timeout is necessary so it can wait a reasonable amount of time for a new line to arrive from the arduino. if timeout=0 then it reads partial lines because it's too fast
         self.exit_flag = False
         self.latest_motor_steps = np.array([0., 0., 0., 0.])
         self.motor_step_0 = np.array([0., 0., 0., 0.])
         self.latest_motor_pos = np.array([0., 0., 0., 0.])
         self.motor_pos_0 = np.array([0., 0., 0., 0.])
         self.pause_flag = False # flag to indicate whether zeroing/something else is in progress, and if so, to pause the main thread
+
+        # Unit conversion values
+        self.microstep_factor = 8.0
+        self.motor_steps_per_rev = 200.0
+        self.steps_per_rev = self.microstep_factor * self.motor_steps_per_rev
 
         self.is_matfile = False
         self.is_zeroed = False
@@ -81,7 +92,26 @@ class doubleMagController:
         msg_encode = msg.encode(encoding='ascii')
         self.ser.write(msg_encode)
 
-    def parse_position(self):
+    def read_serial(self):
+        if self.ser.in_waiting > 0:
+            incoming_serial_words = self.ser.readline().decode().rstrip().split(',')
+
+            # Check the first entry in values to see what kind of data it is
+            if incoming_serial_words[0] == 'steps' and len(incoming_serial_words) == 5:
+                try:
+                    self.latest_motor_steps[:] = np.array([float(x) for x in incoming_serial_words[1:]])
+                    stepdiff = self.latest_motor_steps - self.motor_step_0
+                    self.latest_motor_pos[0] = self.motor_pos_0[0] + self.steps_to_distance(stepdiff[0])
+                    self.latest_motor_pos[1] = self.motor_pos_0[1] + self.steps_to_angle(stepdiff[1])
+                    self.latest_motor_pos[2] = -(self.motor_pos_0[2] + self.steps_to_angle(stepdiff[2]))
+                    self.latest_motor_pos[3] = self.motor_pos_0[3] + self.steps_to_distance(stepdiff[3])
+                except ValueError:
+                    pass
+        else:
+            pass
+
+
+    def parse_position(self): # reworked into read_serial
         if self.ser.in_waiting > 0:
             incoming_serial_words = self.ser.readline().decode().rstrip().split(',')
 
@@ -182,6 +212,17 @@ class doubleMagController:
             self.draw_interface()
 
         self.pause_flag = False
+
+    def set_waypoint(self, wp, relative=False, ):
+        '''
+        Set the requested waypoint as the set point.
+            Parameters:
+                wp (int): the waypoint number to navigate to
+                relative (bool): whether wp should be interpreted as a relative change from the current waypoint (default False)
+            Returns:
+                None
+        '''
+        raise NotImplementedError
 
     def next_waypoint(self):
         # Do nothing if there's no matfile or the system isn't zeroed
@@ -291,30 +332,18 @@ class doubleMagController:
         self.pause_flag = False
 
     def steps_to_distance(self, steps):
-        microstep_factor = 8.0
-        motor_steps_per_rev = 200.0
-        steps_per_rev = microstep_factor * motor_steps_per_rev
         mm_per_rev = 8.0
-        return (steps / steps_per_rev) * mm_per_rev
+        return (steps / self.steps_per_rev) * mm_per_rev
 
     def distance_to_steps(self, position):
-        microstep_factor = 8.0
-        motor_steps_per_rev = 200.0
-        steps_per_rev = microstep_factor * motor_steps_per_rev
         mm_per_rev = 8.0
-        return (position / mm_per_rev) * steps_per_rev
+        return (position / mm_per_rev) * self.steps_per_rev
 
     def steps_to_angle(self, steps):
-        microstep_factor = 8.0
-        motor_steps_per_rev = 200.0
-        steps_per_rev = microstep_factor * motor_steps_per_rev
-        return (steps / steps_per_rev) * 360.0
+        return (steps / self.steps_per_rev) * 360.0
 
     def angle_to_steps(self, angle):
-        microstep_factor = 8.0
-        motor_steps_per_rev = 200.0
-        steps_per_rev = microstep_factor * motor_steps_per_rev
-        return (angle / 360.0) * steps_per_rev
+        return (angle / 360.0) * self.steps_per_rev
 
     def flush_input(self):
         # From https://stackoverflow.com/questions/24582233/python-flush-input-before-raw-input/24618062
@@ -372,7 +401,7 @@ class doubleMagController:
                 self.parse_position()
                 self.draw_position()
 
-        # Stop all motors
+        # Exited the loop: stop all motors
         self.send_msg(mode='M', motor='a', steps=0)
         self.send_msg(mode='M', motor='b', steps=0)
         self.send_msg(mode='M', motor='c', steps=0)
@@ -385,5 +414,3 @@ class doubleMagController:
         self.ser.close()
 
 
-if __name__ == '__main__':
-    controller = doubleMagController(magnet_mat='two_mag_constangle_field_17.27Am2.mat', waypoints='waypoints_angle_30.txt')
