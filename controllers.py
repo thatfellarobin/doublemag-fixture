@@ -18,7 +18,7 @@ arduino_port = '/dev/tty.usbserial-AC00921Z'
 baud = 9600
 ser = serial.Serial(arduino_port, baud, timeout=1)
 
-class DoubleMagnetController(QtGui.QMainWindow, Ui_MainWindow):
+class DoubleMagnetGUI(QtGui.QMainWindow, Ui_MainWindow):
     # Notes on direction
     # - Positive # of steps rotates the motor shaft clockwise as viewed from the motor body.
     # - For the linear axis, clockwise rotation moves the magnet away from the workspace
@@ -67,30 +67,7 @@ class DoubleMagnetController(QtGui.QMainWindow, Ui_MainWindow):
         self.draw_interface()
         self.loop()
 
-    def send_msg(self, mode, motor, steps):
-        # mode: 'M' or 'W' indicating manual or waypoint control, respectively
-        # motor: lowercase letter representing the motor to be moved
-        # steps: number of steps to move. positive or negative. Doesn't have to be int.
-        #   - Note that for manual control, the magnitude doesn't matter, only the sign.
-        if steps > 999999 or steps < -999999:
-            raise ValueError("# steps must be between -999999 and 999999")
 
-        if steps > 0:
-            direction = '+'
-        elif steps < 0:
-            direction = '-'
-        else:
-            direction = '0'
-
-        if mode == 'M':
-            msg = mode + motor + direction + '\n'
-        elif mode == 'W':
-            msg = mode + motor + str(abs(int(steps))).zfill(6) + direction + '\n'
-        else:
-            raise ValueError("mode must be 'M' or 'W'")
-
-        msg_encode = msg.encode(encoding='ascii')
-        self.ser.write(msg_encode)
 
     def read_serial(self):
         if self.ser.in_waiting > 0:
@@ -129,62 +106,62 @@ class DoubleMagnetController(QtGui.QMainWindow, Ui_MainWindow):
         else:
             pass
 
-    def key_press(self, key):
-        if not self.pause_flag:
-            try:
-                char = key.char
-            except AttributeError:
-                # not alphanumeric
-                if key == keyboard.Key.left:
-                    char = 'left'
-                elif key == keyboard.Key.right:
-                    char = 'right'
-                elif key == keyboard.Key.esc:
-                    char = 'esc'
-                else:
-                    char = 'invalid'
+    # def key_press(self, key):
+    #     if not self.pause_flag:
+    #         try:
+    #             char = key.char
+    #         except AttributeError:
+    #             # not alphanumeric
+    #             if key == keyboard.Key.left:
+    #                 char = 'left'
+    #             elif key == keyboard.Key.right:
+    #                 char = 'right'
+    #             elif key == keyboard.Key.esc:
+    #                 char = 'esc'
+    #             else:
+    #                 char = 'invalid'
 
-            if char == 'w': # Magnet one rot away
-                self.send_msg(mode='M', motor='b', steps=-1)
-            elif char == 'a': # Magnet one move left
-                self.send_msg(mode='M', motor='a', steps=1)
-            elif char == 's': # Magnet one rot toward
-                self.send_msg(mode='M', motor='b', steps=1)
-            elif char == 'd': # Magnet one move right
-                self.send_msg(mode='M', motor='a', steps=-1)
-            elif char == 'i': # Magnet two rot away
-                self.send_msg(mode='M', motor='c', steps=1)
-            elif char == 'j': # Magnet two move left
-                self.send_msg(mode='M', motor='d', steps=-1)
-            elif char == 'k': # Magnet two rot toward
-                self.send_msg(mode='M', motor='c', steps=-1)
-            elif char == 'l': # Magnet two move right
-                self.send_msg(mode='M', motor='d', steps=1)
-            elif char == 'left': # Next waypoint
-                self.prev_waypoint()
-            elif char == 'right': # Previous waypoint
-                self.next_waypoint()
-            elif char == 'z':
-                self.zero()
-            elif char == 'x':
-                self.load_waypoints()
-            elif char == 'esc':
-                self.exit_flag = True
+    #         if char == 'w': # Magnet one rot away
+    #             self.send_msg(mode='M', motor='b', steps=-1)
+    #         elif char == 'a': # Magnet one move left
+    #             self.send_msg(mode='M', motor='a', steps=1)
+    #         elif char == 's': # Magnet one rot toward
+    #             self.send_msg(mode='M', motor='b', steps=1)
+    #         elif char == 'd': # Magnet one move right
+    #             self.send_msg(mode='M', motor='a', steps=-1)
+    #         elif char == 'i': # Magnet two rot away
+    #             self.send_msg(mode='M', motor='c', steps=1)
+    #         elif char == 'j': # Magnet two move left
+    #             self.send_msg(mode='M', motor='d', steps=-1)
+    #         elif char == 'k': # Magnet two rot toward
+    #             self.send_msg(mode='M', motor='c', steps=-1)
+    #         elif char == 'l': # Magnet two move right
+    #             self.send_msg(mode='M', motor='d', steps=1)
+    #         elif char == 'left': # Next waypoint
+    #             self.prev_waypoint()
+    #         elif char == 'right': # Previous waypoint
+    #             self.next_waypoint()
+    #         elif char == 'z':
+    #             self.zero()
+    #         elif char == 'x':
+    #             self.load_waypoints()
+    #         elif char == 'esc':
+    #             self.exit_flag = True
 
-    def key_release(self, key):
-        try:
-            char = key.char
-        except AttributeError:
-            char = 'invalid'
+    # def key_release(self, key):
+    #     try:
+    #         char = key.char
+    #     except AttributeError:
+    #         char = 'invalid'
 
-        if char == 'w' or char == 's':
-            self.send_msg(mode='M', motor='b', steps=0)
-        elif char == 'a' or char == 'd':
-            self.send_msg(mode='M', motor='a', steps=0)
-        elif char == 'i' or char == 'k':
-            self.send_msg(mode='M', motor='c', steps=0)
-        elif char == 'j' or char == 'l':
-            self.send_msg(mode='M', motor='d', steps=0)
+    #     if char == 'w' or char == 's':
+    #         self.send_msg(mode='M', motor='b', steps=0)
+    #     elif char == 'a' or char == 'd':
+    #         self.send_msg(mode='M', motor='a', steps=0)
+    #     elif char == 'i' or char == 'k':
+    #         self.send_msg(mode='M', motor='c', steps=0)
+    #     elif char == 'j' or char == 'l':
+    #         self.send_msg(mode='M', motor='d', steps=0)
 
     def load_waypoints(self, waypoints=None, suppress_output=False):
         # A waypoint consists of a field intensity (mT) and a field angle relative to vertical (deg)
@@ -356,24 +333,24 @@ class DoubleMagnetController(QtGui.QMainWindow, Ui_MainWindow):
             import termios
             termios.tcflush(sys.stdin, termios.TCIOFLUSH)
 
-    def draw_interface(self):
-        # Draw the text interface
-        # Draw the controls to rotate and move each magnet
-        # Indicate what buttons to press for other functions: zeroing, next waypoint, previous waypoint
-        # This should get called only once when the interface needs to be brought back up. Otherwise it should not be called repetitively.
+    # def draw_interface(self):
+    #     # Draw the text interface
+    #     # Draw the controls to rotate and move each magnet
+    #     # Indicate what buttons to press for other functions: zeroing, next waypoint, previous waypoint
+    #     # This should get called only once when the interface needs to be brought back up. Otherwise it should not be called repetitively.
 
-        print('    W      <-rot up->      I    ')
-        print('    ^                      ^    ')
-        print('A <---> D              J <---> L')
-        print('    v                      v    ')
-        print('    S      <-rot dn->      K    ')
-        print()
-        print('Load Waypoint: < X >            ')
-        print('Zero position: < Z >            ')
-        print('Next Waypoint: < Right >        ')
-        print('Prev Waypoint: < Left >         ')
-        print('Exit:          < Esc >          ')
-        print()
+    #     print('    W      <-rot up->      I    ')
+    #     print('    ^                      ^    ')
+    #     print('A <---> D              J <---> L')
+    #     print('    v                      v    ')
+    #     print('    S      <-rot dn->      K    ')
+    #     print()
+    #     print('Load Waypoint: < X >            ')
+    #     print('Zero position: < Z >            ')
+    #     print('Next Waypoint: < Right >        ')
+    #     print('Prev Waypoint: < Left >         ')
+    #     print('Exit:          < Esc >          ')
+    #     print()
 
     def draw_position(self):
         # Draw the indications of each magnet position
