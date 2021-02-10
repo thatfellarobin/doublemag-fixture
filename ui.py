@@ -3,6 +3,10 @@ import numpy as np
 import os
 import time
 
+from PyQt5 import uic
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QMainWindow
+
 from subthreads import ArduinoManager
 
 #=========================================================
@@ -12,11 +16,19 @@ qtCreatorFile = 'doublemag.ui'
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtCreatorFile)
 
 #=========================================================
-# Initialize serial connection
+# Serial Info
 #=========================================================
-arduino_port = '/dev/tty.usbserial-AC00921Z'
-baud = 9600
-ser = serial.Serial(arduino_port, baud, timeout=1)
+ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z'
+ARDUINO_BAUD = 9600
+
+#=========================================================
+# Stepper and Motor Info
+#=========================================================
+MICROSTEP_FACTOR = 8.0
+MOTOR_STEPS_PER_REV = 200.0
+STEPS_PER_REV = MICROSTEP_FACTOR * MOTOR_STEPS_PER_REV
+MM_PER_REV = 8.0
+
 
 class DoubleMagnetGUI(QtGui.QMainWindow, Ui_MainWindow):
     # Notes on direction
@@ -26,142 +38,78 @@ class DoubleMagnetGUI(QtGui.QMainWindow, Ui_MainWindow):
     # Notes on units
     # - fixture records position in mm
     def __init__(self):
-        QtGui.QMainWindow.__init__(self)
+        QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
         self.setupUi(self)
+        self.setupTimer()
 
-        self.exit_flag = False
-        self.latest_motor_steps = np.array([0., 0., 0., 0.])
+        # Create serial connection
+        self.ser = serial.Serial(ARDUINO_PORT, ARDUINO_BAUD, timeout=1)
+
+        # Variables to track motor position
         self.motor_step_0 = np.array([0., 0., 0., 0.])
-        self.latest_motor_pos = np.array([0., 0., 0., 0.])
+        self.motor_step = np.array([0., 0., 0., 0.])
         self.motor_pos_0 = np.array([0., 0., 0., 0.])
-        self.pause_flag = False # flag to indicate whether zeroing/something else is in progress, and if so, to pause the main thread
+        self.motor_pos = np.array([0., 0., 0., 0.])
 
-        # Unit conversion values
-        self.microstep_factor = 8.0
-        self.motor_steps_per_rev = 200.0
-        self.steps_per_rev = self.microstep_factor * self.motor_steps_per_rev
+        # Variables to track magnetic reading
+        self.mag = np.array([0., 0., 0.]) # x, y, z (mT)
 
-        self.is_matfile = False
-        self.is_zeroed = False
+    def setupTimer(self):
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update)
+        self.timer.start(1000.0/30.0) # milliseconds between updates
 
-        if magnet_mat:
-            # Matfile must have the following corresponding vectors:
-            # - vector 'r' which is centre-to-centre distance between magnet and workspace, in m
-            # - vector 'B_map_norm' which is field intensity, in T
-            self.matfile = loadmat(magnet_mat)
-            self.mat_r = np.squeeze(self.matfile['r']) * 1000 # Convert T to mT
-            self.mat_B = np.squeeze(self.matfile['B_map_norm']) * 1000 # Convert m to mm
-            self.mat_r_rev = np.flip(self.mat_r) # np.interp requires increasing xp array as per documentation, this is for that case
-            self.mat_B_rev = np.flip(self.mat_B) # np.interp requires increasing xp array as per documentation, this is for that case
-            self.is_matfile = True
-        if waypoints:
-            self.load_waypoints(waypoints=waypoints, suppress_output=True)
+    def update(self):
+        # Get latest readings
+        self.updateReadings()
 
-        self.listener = keyboard.Listener(
-            on_press=self.key_press,
-            on_release=self.key_release)
-        self.listener.start()
+        # Send motor commands
+        # TODO:
 
-        # Start controller
-        self.draw_interface()
-        self.loop()
+        # Update UI
+        # TODO:
+        raise NotImplementedError
 
-
-
-    def read_serial(self):
-        if self.ser.in_waiting > 0:
+    def updateReadings(self):
+        while self.ser.in_waiting > 0: # Work through buffer until most recent message
             incoming_serial_words = self.ser.readline().decode().rstrip().split(',')
 
             # Check the first entry in values to see what kind of data it is
-            if incoming_serial_words[0] == 'steps' and len(incoming_serial_words) == 5:
-                try:
-                    self.latest_motor_steps[:] = np.array([float(x) for x in incoming_serial_words[1:]])
-                    stepdiff = self.latest_motor_steps - self.motor_step_0
-                    self.latest_motor_pos[0] = self.motor_pos_0[0] + self.steps_to_distance(stepdiff[0])
-                    self.latest_motor_pos[1] = self.motor_pos_0[1] + self.steps_to_angle(stepdiff[1])
-                    self.latest_motor_pos[2] = -(self.motor_pos_0[2] + self.steps_to_angle(stepdiff[2]))
-                    self.latest_motor_pos[3] = self.motor_pos_0[3] + self.steps_to_distance(stepdiff[3])
-                except ValueError:
-                    pass
-        else:
-            pass
+            try:
+                if incoming_serial_words[0] == 'steps':
+                    # Assumed message contents:
+                    # 0: 'steps'
+                    # 1-4: step value of motor A, B, C, D
+                    # 5-7: Magnetic field in x, y, z
+                    try:
+                        # Update position
+                        self.motor_step[:] = np.array([float(x) for x in incoming_serial_words[1:5]])
+                        stepdiff = self.motor_step - self.motor_step_0
+                        self.motor_pos[0] = self.motor_pos_0[0] + self.steps_to_distance(stepdiff[0])
+                        self.motor_pos[1] = self.motor_pos_0[1] + self.steps_to_angle(stepdiff[1])
+                        self.motor_pos[2] = -(self.motor_pos_0[2] + self.steps_to_angle(stepdiff[2]))
+                        self.motor_pos[3] = self.motor_pos_0[3] + self.steps_to_distance(stepdiff[3])
 
+                        # Update magnetic
+                        for i in [5, 6, 7]:
+                            self.mag[i] = incoming_serial_words[i]
+                    except ValueError:
+                        pass
+                    except IndexError:
+                        pass
 
-    def parse_position(self): # reworked into read_serial
-        if self.ser.in_waiting > 0:
-            incoming_serial_words = self.ser.readline().decode().rstrip().split(',')
+                elif incoming_serial_words[0] == 'endstopviolation':
+                    # the command is asking the motor to move beyond the end stop
+                    raise NotImplementedError
 
-            # Check the first entry in values to see what kind of data it is
-            if incoming_serial_words[0] == 'steps' and len(incoming_serial_words) == 5:
-                try:
-                    self.latest_motor_steps[:] = np.array([float(x) for x in incoming_serial_words[1:]])
-                    stepdiff = self.latest_motor_steps - self.motor_step_0
-                    self.latest_motor_pos[0] = self.motor_pos_0[0] + self.steps_to_distance(stepdiff[0])
-                    self.latest_motor_pos[1] = self.motor_pos_0[1] + self.steps_to_angle(stepdiff[1])
-                    self.latest_motor_pos[2] = -(self.motor_pos_0[2] + self.steps_to_angle(stepdiff[2]))
-                    self.latest_motor_pos[3] = self.motor_pos_0[3] + self.steps_to_distance(stepdiff[3])
-                except ValueError:
-                    pass
-        else:
-            pass
+                elif incoming_serial_words[0] == 'nonvalidmsg':
+                    # the message sent to the arduino was not valid
+                    raise NotImplementedError
+            except NameError:
+                # No messages?
+                pass
 
-    # def key_press(self, key):
-    #     if not self.pause_flag:
-    #         try:
-    #             char = key.char
-    #         except AttributeError:
-    #             # not alphanumeric
-    #             if key == keyboard.Key.left:
-    #                 char = 'left'
-    #             elif key == keyboard.Key.right:
-    #                 char = 'right'
-    #             elif key == keyboard.Key.esc:
-    #                 char = 'esc'
-    #             else:
-    #                 char = 'invalid'
-
-    #         if char == 'w': # Magnet one rot away
-    #             self.send_msg(mode='M', motor='b', steps=-1)
-    #         elif char == 'a': # Magnet one move left
-    #             self.send_msg(mode='M', motor='a', steps=1)
-    #         elif char == 's': # Magnet one rot toward
-    #             self.send_msg(mode='M', motor='b', steps=1)
-    #         elif char == 'd': # Magnet one move right
-    #             self.send_msg(mode='M', motor='a', steps=-1)
-    #         elif char == 'i': # Magnet two rot away
-    #             self.send_msg(mode='M', motor='c', steps=1)
-    #         elif char == 'j': # Magnet two move left
-    #             self.send_msg(mode='M', motor='d', steps=-1)
-    #         elif char == 'k': # Magnet two rot toward
-    #             self.send_msg(mode='M', motor='c', steps=-1)
-    #         elif char == 'l': # Magnet two move right
-    #             self.send_msg(mode='M', motor='d', steps=1)
-    #         elif char == 'left': # Next waypoint
-    #             self.prev_waypoint()
-    #         elif char == 'right': # Previous waypoint
-    #             self.next_waypoint()
-    #         elif char == 'z':
-    #             self.zero()
-    #         elif char == 'x':
-    #             self.load_waypoints()
-    #         elif char == 'esc':
-    #             self.exit_flag = True
-
-    # def key_release(self, key):
-    #     try:
-    #         char = key.char
-    #     except AttributeError:
-    #         char = 'invalid'
-
-    #     if char == 'w' or char == 's':
-    #         self.send_msg(mode='M', motor='b', steps=0)
-    #     elif char == 'a' or char == 'd':
-    #         self.send_msg(mode='M', motor='a', steps=0)
-    #     elif char == 'i' or char == 'k':
-    #         self.send_msg(mode='M', motor='c', steps=0)
-    #     elif char == 'j' or char == 'l':
-    #         self.send_msg(mode='M', motor='d', steps=0)
 
     def load_waypoints(self, waypoints=None, suppress_output=False):
         # A waypoint consists of a field intensity (mT) and a field angle relative to vertical (deg)
@@ -309,48 +257,16 @@ class DoubleMagnetGUI(QtGui.QMainWindow, Ui_MainWindow):
         self.pause_flag = False
 
     def steps_to_distance(self, steps):
-        mm_per_rev = 8.0
-        return (steps / self.steps_per_rev) * mm_per_rev
+        return (steps / STEPS_PER_REV) * MM_PER_REV
 
     def distance_to_steps(self, position):
-        mm_per_rev = 8.0
-        return (position / mm_per_rev) * self.steps_per_rev
+        return (position /MM_PER_REV) * STEPS_PER_REV
 
     def steps_to_angle(self, steps):
-        return (steps / self.steps_per_rev) * 360.0
+        return (steps / STEPS_PER_REV) * 360.0
 
     def angle_to_steps(self, angle):
-        return (angle / 360.0) * self.steps_per_rev
-
-    def flush_input(self):
-        # From https://stackoverflow.com/questions/24582233/python-flush-input-before-raw-input/24618062
-        try:
-            import msvcrt
-            while msvcrt.kbhit():
-                msvcrt.getch()
-        except ImportError:
-            import sys
-            import termios
-            termios.tcflush(sys.stdin, termios.TCIOFLUSH)
-
-    # def draw_interface(self):
-    #     # Draw the text interface
-    #     # Draw the controls to rotate and move each magnet
-    #     # Indicate what buttons to press for other functions: zeroing, next waypoint, previous waypoint
-    #     # This should get called only once when the interface needs to be brought back up. Otherwise it should not be called repetitively.
-
-    #     print('    W      <-rot up->      I    ')
-    #     print('    ^                      ^    ')
-    #     print('A <---> D              J <---> L')
-    #     print('    v                      v    ')
-    #     print('    S      <-rot dn->      K    ')
-    #     print()
-    #     print('Load Waypoint: < X >            ')
-    #     print('Zero position: < Z >            ')
-    #     print('Next Waypoint: < Right >        ')
-    #     print('Prev Waypoint: < Left >         ')
-    #     print('Exit:          < Esc >          ')
-    #     print()
+        return (angle / 360.0) * STEPS_PER_REV
 
     def draw_position(self):
         # Draw the indications of each magnet position

@@ -13,7 +13,7 @@ class ArduinoManager(QtCore.QThread):
         # Initiate loop
         raise NotImplementedError
 
-    def loop(self):
+    def loop(self): # implement as a timer?
         raise NotImplementedError
 
         # Receive latest serial message from the arduino

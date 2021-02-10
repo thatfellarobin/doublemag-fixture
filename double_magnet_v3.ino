@@ -102,6 +102,9 @@ void loop() {
       // Make sure the command doesn't exceed the end stop.
       if (digitalRead((limitPins[0]) && activeMotor == 0 || digitalRead(limitPins[1]) && activeMotor == 3) && steps > 0) {
         // don't move the motor
+        Serial.print("endstopviolation,");
+        Serial.print(activemotor);
+        Serial.print("\r\n");
       }
       else { // No limit pin problems
         motorStepTarget[activeMotor] = steps;
@@ -113,7 +116,7 @@ void loop() {
     }
     else {
       // Improper message format
-      Serial.println("Bad message.");
+      Serial.println("nonvalidmsg\r\n");
     }
 
     // Reset new message flag

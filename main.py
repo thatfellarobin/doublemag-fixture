@@ -1,7 +1,7 @@
 import sys
-from PyQt5 import QtCore, QtGui, uic
+from PyQt5.QtWidgets import QApplication
 
-from controllers import DoubleMagnetGUI
+from ui import DoubleMagnetGUI
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
