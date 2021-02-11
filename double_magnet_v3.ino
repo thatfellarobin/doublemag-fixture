@@ -34,8 +34,9 @@ boolean validMsg = false; // If the parser finds a valid message, this flag is f
 // Data reporting variables
 unsigned long currentTime;
 unsigned long previousTime;
-const unsigned int timeInterval = 50; // milliseconds between outgoing messages
-float mag_x, mag_y, mag_z; // Magnetic measurement values
+const unsigned int timeInterval = 100; // milliseconds between outgoing messages
+float magfield_x, magfield_y, magfield_z; // Raw magnetic measurement values
+float magfield_magnitude, magfield_angle; // Derived field characteristics
 
 
 // Motor control
@@ -89,94 +90,72 @@ void setup() {
 }
 
 void loop() {
-  // TODO: Implement proportional controller for field
-  // Note: apply a tolerance to the above to prevent vibrations upon reaching the site.
-
+  // # Check for new messages in serial port
   recvWithEndMarker();
 
+  // # Check if a new position command has been issued.
   if (newMsg == true) {
     parseMsg();
-
-    // If the message is valid, run the motors in accordance with the message
-    if (validMsg) {
-      // Make sure the command doesn't exceed the end stop.
-      if (digitalRead((limitPins[0]) && activeMotor == 0 || digitalRead(limitPins[1]) && activeMotor == 3) && steps > 0) {
-        // don't move the motor
-        Serial.print("endstopviolation,");
-        Serial.print(activemotor);
-        Serial.print("\r\n");
-      }
-      else { // No limit pin problems
-        motorStepTarget[activeMotor] = steps;
-        Motor_A.moveTo(motorStepTarget[0]);
-        Motor_B.moveTo(motorStepTarget[1]);
-        Motor_C.moveTo(motorStepTarget[2]);
-        Motor_D.moveTo(motorStepTarget[3]);
-      }
-    }
-    else {
-      // Improper message format
-      Serial.println("nonvalidmsg\r\n");
-    }
-
-    // Reset new message flag
     newMsg = false;
   }
+
+  // # Take field measurement
+  getFieldValues();
+
+  // # Decide on the target position
+  // Consider the following:
+  // 1. External commands
+  // 2. Limit switch signals
+  // 3. Other safety stops (field maxima, etc.)
+
+  // (1) For a valid message, set motor target in accordance with the message
+  if (validMsg) {
+    setTargetFromField(fluxTarget, angleTarget);
+
+    // Make sure the command doesn't exceed the end stop.
+    if (digitalRead((limitPins[0]) && activeMotor == 0 || digitalRead(limitPins[1]) && activeMotor == 3) && steps > 0) {
+      // don't move the motor
+      Serial.print("endstopviolation,");
+      Serial.print(activemotor);
+      Serial.print("\r\n");
+    }
+    else { // No limit pin problems
+      motorStepTarget[activeMotor] = steps;
+      Motor_A.moveTo(motorStepTarget[0]);
+      Motor_B.moveTo(motorStepTarget[1]);
+      Motor_C.moveTo(motorStepTarget[2]);
+      Motor_D.moveTo(motorStepTarget[3]);
+    }
+  }
+  // (2, 3) adjust target for end stop violations and field safety.
+
+  else {
+    // Improper message format
+    Serial.println("nonvalidmsg\r\n");
+  }
+
 
   // Limit switch instant stop
   speed_A = Motor_A.speed();
   speed_B = Motor_B.speed();
-  if (digitalRead((limitPins[0]) && speed_A > 0) {
+  if (digitalRead(limitPins[0]) && speed_A > 0) {
     // Stop motor A as soon as possible
     Motor_A.runToPosition(Motor_A.currentPosition())
   }
-  if (digitalRead((limitPins[0]) && speed_B > 0) {
+  if (digitalRead(limitPins[0]) && speed_B > 0) {
     // Stop motor D as soon as possible
     Motor_B.runToPosition(Motor_A.currentPosition())
   }
 
-  // Run motors
-  Motor_A.run();
-  Motor_B.run();
-  Motor_C.run();
-  Motor_D.run();
+  // Run motors -
+  runMotors();
 
   // Handle periodic data reporting
   currentTime = millis();
   if (currentTime - previousTime > timeInterval) {
     previousTime = currentTime;
-
-    // Report motor positions
-    Serial.print("steps,");
-    Serial.print(Motor_A.currentPosition());
-    Serial.print(",");
-    Serial.print(Motor_B.currentPosition());
-    Serial.print(",");
-    Serial.print(Motor_C.currentPosition());
-    Serial.print(",");
-    Serial.print(Motor_D.currentPosition());
-
-    // Take field measurement
-    if (sensor.readData(&mag_x, &mag_y, &mag_z)) {
-      // Report field conditions
-      Serial.print(",");
-      Serial.print(mag_x);
-      Serial.print(",");
-      Serial.print(mag_y);
-      Serial.print(",");
-      Serial.print(mag_z);
-    }
-    else {
-      // Always the same number of commas regardless of field measurement success
-      Serial.print(",")
-      Serial.print(",")
-      Serial.print(",")
-    }
-
-    // End the message
-    Serial.print("\r\n");
+    writeTelemetry();
   }
-}
 
 void recvWithEndMarker() {
   static byte ndx = 0;
@@ -206,7 +185,6 @@ void parseMsg() {
   Read through the received message
 
   TODO: Implement a stop signal
-  TODO: Implement direct field commands
 
   # Message descriptions:
   byte 1: one byte indicating the message type
@@ -298,4 +276,67 @@ void parseMsg() {
   //     }
   //   }
   // }
+}
+
+void runMotors() {
+  // to be called as often as possible
+  Motor_A.run();
+  Motor_B.run();
+  Motor_C.run();
+  Motor_D.run();
+}
+
+void setTargetFromField(fluxTarget, angleTarget) {
+  // Proportional controller to set the target step value
+  // Apply a tolerance to avoid vibrations.
+}
+
+void getFieldValues() {
+  // Read magnetic sensor data
+  // Calculate field magnitude and angle
+  // Apply low pass filter - weighted average of previous value and new value
+
+
+  if (sensor.readData(&magfield_x, &magfield_y, &magfield_z)) {
+    // valid reading
+  }
+  else {
+    // invalid reading
+  }
+}
+
+void writeTelemetry() {
+  // Send messages through serial to connected computer
+  // TODO:
+
+  // Report motor positions
+  Serial.print("steps,");
+  Serial.print(Motor_A.currentPosition());
+  Serial.print(",");
+  Serial.print(Motor_B.currentPosition());
+  Serial.print(",");
+  Serial.print(Motor_C.currentPosition());
+  Serial.print(",");
+  Serial.print(Motor_D.currentPosition());
+
+  // Take field measurement
+  if (sensor.readData(&magfield_x, &magfield_y, &magfield_z)) {
+    // Report field conditions
+    Serial.print(",");
+    Serial.print(magfield_x);
+    Serial.print(",");
+    Serial.print(magfield_y);
+    Serial.print(",");
+    Serial.print(magfield_z);
+  }
+  else {
+    // Always the same number of commas regardless of field measurement success
+    Serial.print(",")
+    Serial.print(",")
+    Serial.print(",")
+  }
+
+  // End the message
+  Serial.print("\r\n");
+}
 }
