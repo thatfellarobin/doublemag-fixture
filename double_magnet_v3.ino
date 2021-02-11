@@ -10,9 +10,6 @@ Notes on direction:
 
 Attribution:
 - Code for serial interfacing from here: https://forum.arduino.cc/index.php?topic=288234.0
-
-TODO:
--
 */
 
 // Includes
@@ -40,6 +37,7 @@ unsigned long previousTime;
 const unsigned int timeInterval = 50; // milliseconds between outgoing messages
 float mag_x, mag_y, mag_z; // Magnetic measurement values
 
+
 // Motor control
 AccelStepper Motor_A(AccelStepper::DRIVER, stepPins[0], dirPins[0]);
 AccelStepper Motor_B(AccelStepper::DRIVER, stepPins[1], dirPins[1]);
@@ -47,6 +45,8 @@ AccelStepper Motor_C(AccelStepper::DRIVER, stepPins[2], dirPins[2]);
 AccelStepper Motor_D(AccelStepper::DRIVER, stepPins[3], dirPins[3]);
 long motorStepTarget[motorCount] = {}; // stores the target motor positions relative to the startup state
 float speed_A, speed_B;
+int fluxTarget = 1;
+float angleTarget = 0;
 
 // Magnetic sensor control
 Adafruit_MLX90393 magSensor = Adafruit_MLX90393();
@@ -89,12 +89,12 @@ void setup() {
 }
 
 void loop() {
-  // Check if there is a new message
+  // TODO: Implement proportional controller for field
+  // Note: apply a tolerance to the above to prevent vibrations upon reaching the site.
+
   recvWithEndMarker();
 
   if (newMsg == true) {
-    // Received a new message.
-    //Parse it to see if it's valid, and if it is, extract the useful information.
     parseMsg();
 
     // If the message is valid, run the motors in accordance with the message
@@ -206,51 +206,96 @@ void parseMsg() {
   Read through the received message
 
   TODO: Implement a stop signal
+  TODO: Implement direct field commands
 
-  byte 1: one byte indicating which motor is being referred to ('a', 'b', 'c', 'd')
-  bytes 2-7: six bytes indicating the absolute step count to navigate towards.
-    - First byte is most significant digit
-    - '0' to '9'.
-    - Max num steps that can be commanded is 999999
-  byte 8: byte indicating the sign ('-' is negative, '+' is positive)
+  # Message descriptions:
+  byte 1: one byte indicating the message type
+
+  ## Message type 'f': direct field input
+  bytes 2-4: 3 char string: flux intensity (mT).
+  bytes 5-9: 5 char string: field angle (rad). format #.###
+
+  ## Message type 's': stop immediately
   */
 
   int newDigit = 0;
   byte newControlMode = 0;
 
   validMsg = true; // Assume the message is valid at first
-  steps = 0;
 
-  // Process the first byte to determine the control type
-  for (int i = 0; i < 8; i++) {
-    if (i == 0) { // motor byte
-      activeMotor = receivedChars[i] - 'a';
-      if (activeMotor < 0 || activeMotor > 3) {
-        validMsg = false;
-        break;
-      }
-    }
-    else if (i > 0 && i < 7) { // step target bytes
-      newDigit = receivedChars[i] - '0';
+  if receivedChars[0]-'a' == 'f' {
+    // direct field control
+    for (int i = 1; i < 4; i++) {
+      // read flux intensity chars
+      fluxTarget = 0;
+      newDigit = receivedChars[i]-'0';
       if (newDigit >= 0 && newDigit <= 9) {
-        steps = (10 * steps) + newDigit;
+        fluxTarget = (10 * fluxTarget) + newDigit;
       }
       else {
         validMsg = false;
         break;
       }
     }
-    else { // direction byte
-      if (receivedChars[i] == '-') {
-        steps = -steps;
+    for (int i = 4; i < 9; i++) {
+      // read field angle chars
+      if (i == 4) {
+        newDigit = receivedChars[i]-'0';
+        if (newDigit >= 0 && newDigit <= 9) {
+          angleTarget = newDigit;
+        }
+        else {
+          validMsg = false;
+          break;
+        }
       }
-      else if (receivedChars[i] == '+') {
-        //do nothing
-      }
-      else {
-        validMsg = false;
-        break;
+      else if (i >= 6) {
+        newDigit = receivedChars[i]-'0';
+        if (newDigit >= 0 && newDigit <= 9) {
+          angleTarget = angleTarget + (newDigit / pow(10, i-5);
+        }
+        else {
+          validMsg = false;
+          break;
+        }
       }
     }
   }
+  else if receivedChars[0]-'a' == 's' {
+    // Stop immediately
+    // TODO:
+  }
+
+  // Loop through bytes
+  // for (int i = 0; i < msgNumChars; i++) {
+  //   if (i == 0) { // motor byte
+  //     activeMotor = receivedChars[i] - 'a';
+  //     if (activeMotor < 0 || activeMotor > 3) {
+  //       validMsg = false;
+  //       break;
+  //     }
+  //   }
+  //   else if (i > 0 && i < 7) { // step target bytes
+  //     newDigit = receivedChars[i] - '0';
+  //     if (newDigit >= 0 && newDigit <= 9) {
+  //       steps = (10 * steps) + newDigit;
+  //     }
+  //     else {
+  //       validMsg = false;
+  //       break;
+  //     }
+  //   }
+  //   else { // direction byte
+  //     if (receivedChars[i] == '-') {
+  //       steps = -steps;
+  //     }
+  //     else if (receivedChars[i] == '+') {
+  //       //do nothing
+  //     }
+  //     else {
+  //       validMsg = false;
+  //       break;
+  //     }
+  //   }
+  // }
 }
