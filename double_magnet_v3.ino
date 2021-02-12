@@ -7,8 +7,8 @@ It listens for serial input containing instructions for running the motors and e
 Notes on movement:
 - Positive # of steps rotates the motor shaft clockwise as viewed from the motor body.
 - For the linear axis, clockwise rotation moves the magnet away from the workspace
-- Linear: 200 steps per rev / 8 mm per rev = 25 steps per mm
-- Angular: 200 steps per rev / 360 deg per rev = 0.56 steps per deg
+- Linear: (200*8) steps per rev / 8 mm per rev = 200 steps per mm
+- Angular: (200*8) steps per rev / 360 deg per rev = 4.44 steps per deg
 
 Attribution:
 - Code for serial interfacing from here: https://forum.arduino.cc/index.php?topic=288234.0
@@ -29,15 +29,14 @@ const int limitPins[] = {10, 11}; // Pull down
 // Serial message variables
 const byte msgNumChars = 32;
 char receivedChars[msgNumChars];
-boolean newMsg = false; // flag to indicate if a new message has arrived
-boolean validMsg = false; // If the parser finds a valid message, this flag is flipped true
+bool newMsg = false; // flag to indicate if a new message has arrived
 
 // Data reporting variables
 unsigned long currentTime;
 unsigned long previousReportTime;
 unsigned long previousMagsenseTime;
 const unsigned int reportingTimeInterval = 100; // milliseconds between outgoing messages
-const unsigned int magsenseTimeInterval = 50; // milliseconds between magnetic field sensor readings
+const unsigned int magsenseTimeInterval = 10; // milliseconds between magnetic field sensor readings FIXME: Does this sensor have relevant limitations?
 float magfield_x, magfield_y, magfield_z; // Raw magnetic measurement values TODO: Figure out which axis we don't care about.
 float magfield_magnitude, magfield_angle; // Derived field characteristics. These values are filtered.
 
@@ -47,7 +46,6 @@ AccelStepper Motor_A(AccelStepper::DRIVER, stepPins[0], dirPins[0]);
 AccelStepper Motor_B(AccelStepper::DRIVER, stepPins[1], dirPins[1]);
 AccelStepper Motor_C(AccelStepper::DRIVER, stepPins[2], dirPins[2]);
 AccelStepper Motor_D(AccelStepper::DRIVER, stepPins[3], dirPins[3]);
-long motorStepTarget[motorCount] = {}; // stores the target motor positions relative to the startup state
 int fluxTarget = 1;
 float angleTarget = 0;
 
@@ -68,12 +66,6 @@ void setup() {
   Motor_D.setMaxSpeed(1000);
   Motor_D.setAcceleration(500);
 
-  // Set initial motor target
-  Motor_A.moveTo(motorStepTarget[0]);
-  Motor_B.moveTo(motorStepTarget[1]);
-  Motor_C.moveTo(motorStepTarget[2]);
-  Motor_D.moveTo(motorStepTarget[3]);
-
   // Set up limit switch pins
   pinMode(limitPins[0], INPUT);
   pinMode(limitPins[1], INPUT);
@@ -82,13 +74,18 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Serial ready");
 
-  if (sensor.begin()) {
+  // Set up magnetic field sensor
+  if (magSensor.begin_I2C()) { // TODO: Figure out correct pins
     Serial.println("Found a MLX90393 sensor");
   }
+  // TODO: investigate built in filtering, gain, resolution, oversampling
+  // https://adafruit.github.io/Adafruit_MLX90393_Library/html/class_adafruit___m_l_x90393.html
+  // https://github.com/adafruit/Adafruit_MLX90393_Library
 
   // Start timer
   currentTime = millis();
-  previousTime = millis();
+  previousMagsenseTime = millis();
+  previousReportTime = millis();
 }
 
 void loop() {
@@ -116,12 +113,13 @@ void loop() {
   // 3. Other safety stops (field maxima, etc.)
 
   // (1) For a valid message, set motor target in accordance with the message
+  // This must be called every loop since this is the proportional gain controller
   setStepTarget();
   // (2) adjust target for limit switches.
-  if (digitalRead((limitPins[0]) && Motor_A.targetPosition()-Motor_A.currentPosition() > 0) {
+  if (digitalRead(limitPins[0]) && Motor_A.targetPosition()-Motor_A.currentPosition()) > 0) {
     Motor_A.stop();
   }
-  if (digitalRead((limitPins[1]) && Motor_D.targetPosition()-Motor_D.currentPosition() > 0) {
+  if (digitalRead(limitPins[1]) && Motor_D.targetPosition()-Motor_D.currentPosition() > 0) {
     Motor_D.stop();
   }
   // TODO: (3) adjust target for field safety
@@ -134,6 +132,7 @@ void loop() {
     previousReportTime = currentTime;
     writeTelemetry();
   }
+}
 
 void recvWithEndMarker() {
   static byte ndx = 0;
@@ -163,7 +162,6 @@ void parseMsg() {
   Read through the received message
 
   TODO: Implement a stop signal
-  TODO: only update the global variables if the message is valid
 
   # Message descriptions:
   byte 1: one byte indicating the message type
@@ -175,19 +173,20 @@ void parseMsg() {
   ## Message type 's': stop immediately
   */
 
+  bool validMsg = true;
+  int fluxTarget_temp = 0;
+  float angleTarget_temp = 0;
+
   int newDigit = 0;
   byte newControlMode = 0;
-
-  validMsg = true; // Assume the message is valid at first
 
   if receivedChars[0]-'a' == 'f' {
     // direct field control
     for (int i = 1; i < 4; i++) {
       // read flux intensity chars
-      fluxTarget = 0;
       newDigit = receivedChars[i]-'0';
       if (newDigit >= 0 && newDigit <= 9) {
-        fluxTarget = (10 * fluxTarget) + newDigit;
+        fluxTarget_temp = (10 * fluxTarget_temp) + newDigit;
       }
       else {
         validMsg = false;
@@ -199,7 +198,7 @@ void parseMsg() {
       if (i == 4) {
         newDigit = receivedChars[i]-'0';
         if (newDigit >= 0 && newDigit <= 9) {
-          angleTarget = newDigit;
+          angleTarget_temp = newDigit;
         }
         else {
           validMsg = false;
@@ -209,13 +208,17 @@ void parseMsg() {
       else if (i >= 6) {
         newDigit = receivedChars[i]-'0';
         if (newDigit >= 0 && newDigit <= 9) {
-          angleTarget = angleTarget + (newDigit / pow(10, i-5);
+          angleTarget_temp = angleTarget_temp + (newDigit / pow(10, i-5);
         }
         else {
           validMsg = false;
           break;
         }
       }
+    }
+    if (validMsg) {
+      fluxTarget = fluxTarget_temp;
+      angleTarget = angleTarget_temp;
     }
   }
   else if receivedChars[0]-'a' == 's' {
@@ -235,18 +238,29 @@ void runMotors() {
 void setStepTarget() {
   // Proportional controller to set the target step value
   // Apply a tolerance to avoid vibrations.
+  // TODO: angle can be rotated 180 deg without consequence. Adjust for this?
 
   float fieldDiff = fluxTarget - magfield_magnitude; // If positive, the motors need to move closer together (negative rotation)
-  float angleDiff = angleTarget - magfield_angle; // TODO:
+  float angleDiff = angleTarget - magfield_angle; // TODO: figure out directionality
 
-  long linearSteps = -20 * fieldDiff // 1 step for every 0.05 mT off from the target
-  long angularSteps = angleDiff
+  // Adjust gain values here
+  long linearSteps = -20 * fieldDiff; // 1 step for every 0.05 mT of error
+  long angularSteps = 4 * angleDiff; // 1 step for every 0.25 deg of error
 
-  Motor_A.moveTo()
-  Motor_D.moveTo()
-  // float magfield_magnitude, magfield_angle; // Derived field characteristics. These values are filtered.
-  // int fluxTarget = 1;
-  // float angleTarget = 0;
+  // Apply saturation values to prevent vibrations around the target
+  if (abs(linearSteps) <= 10) { // 10 steps = 0.05 mm
+    linearSteps = 0;
+  }
+  if (abs(angularSteps <= 1)) { // 1 step ~= 0.23 deg
+    angularSteps = 0;
+  }
+
+  Motor_A.moveTo(Motor_A.currentPosition() + linearSteps);
+  Motor_D.moveTo(Motor_D.currentPosition() + linearSteps);
+
+  // TODO: Figure out directionality
+  Motor_B.moveTo(Motor_B.currentPosition() + angularSteps);
+  Motor_C.moveTo(Motor_C.currentPosition() - angularSteps);
 }
 
 void getFieldValues() {
