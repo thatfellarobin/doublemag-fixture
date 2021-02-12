@@ -55,7 +55,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.motor_pos = np.array([0., 0., 0., 0.])
 
         # Variables to track magnetic reading
-        self.mag = np.array([0., 0., 0.]) # x, y, z (mT)
+        self.mag = np.array([0., 0.]) # magnitude (mT) and angle (deg)
 
         self.new_msg = ''
         self.msg_history = ['']
@@ -85,7 +85,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                 # Assumed message contents:
                 # 0: 'steps'
                 # 1-4: step value of motor A, B, C, D
-                # 5-7: Magnetic field in x, y, z
+                # 5: magnetic field magnitude (mT)
+                # 6: magnetic field angle (deg)
                 try:
                     # Update position
                     self.motor_step[:] = np.array([float(x) for x in incoming_serial_words[1:5]])
@@ -96,8 +97,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                     self.motor_pos[3] = self.motor_pos_0[3] + self.__steps_to_distance(stepdiff[3])
 
                     # Update magnetic
-                    for i in [5, 6, 7]:
-                        self.mag[i] = incoming_serial_words[i]
+                    self.mag[0] = incoming_serial_words[5]
+                    self.mag[1] = incoming_serial_words[6]
                 except ValueError:
                     pass
                 except IndexError:
@@ -114,13 +115,20 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             pass
 
     def updateUI(self):
+        # Update the commanded field angle according to slider position
         self.input_fieldAngle.setText(str(self.slider_fieldAngle.value()))
         self.input_fieldIntensity.setText(str(self.slider_fieldIntensity.value()))
+
+        # Update the received messages box with latest messages if the new message is unique
         if self.new_msg != self.msg_history[-1]:
             self.msg_history.append(self.new_msg)
             if len(self.msg_history) > MSG_HISTORY_LENGTH:
                 self.msg_history.pop(0)
         self.output_latestMsg.setPlainText('\n'.join(self.msg_history))
+
+        # Update the field readings from the latest message
+        self.output_fieldIntensity.setText(str(self.mag[0]))
+        self.output_fieldAngle.setText(str(self.mag[1]))
 
     def resetField(self):
         self.slider_fieldAngle.setValue(0.0)
@@ -136,32 +144,32 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
             Parameters:
                 field (int): desired magnetic flux intensity (mT)
-                angle (float): desired field angle (rad)
+                angle (float): desired field angle (deg)
             Returns:
                 None
 
         Replaces send_msg()
         '''
-        if abs(angle) < np.pi and field >= 1 and field <= 35:
+        if abs(angle) <= 180 and field >= 1 and field <= 35:
             msg = f'f{field:03d},{angle:05.3f}\n' # 3 characters for field, 5 characters for angle (zero-padded)
             msg = msg.encode(encoding='ascii')
             self.ser.write(msg)
 
-    def send_msg(self, motor, step_target):
+    def sendSteps(self, motor, rel_steps=0):
         '''
-        [OUTDATED] Send messages to the arduino about how the motors should move.
-        To be replaced with sendField()
+        TODO: could use this for manual control
             Parameters:
                 motor (char): 'a', 'b', 'c', or 'd' indicating which motor is selected
                 step_target (int): the step value target that the motor should move towards
             Returns:
                 None
         '''
+        raise NotImplementedError
 
-        if steps > 999999 or steps < -999999:
+        if rel_steps > 999999 or rel_steps < -999999:
             raise ValueError("# steps must be between -999999 and 999999")
 
-        if steps >= 0:
+        if rel_steps >= 0:
             direction = '+'
         else:
             direction = '-'
@@ -172,15 +180,27 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
 
     def __steps_to_distance(self, steps):
+        '''
+        Returns mm displacement for a given number of steps
+        '''
         return (steps / STEPS_PER_REV) * MM_PER_REV
 
     def __distance_to_steps(self, position):
+        '''
+        Returns steps for a given mm displacement
+        '''
         return (position /MM_PER_REV) * STEPS_PER_REV
 
     def __steps_to_angle(self, steps):
+        '''
+        Returns angle displacement (degrees) for a given number of steps
+        '''
         return (steps / STEPS_PER_REV) * 360.0
 
     def __angle_to_steps(self, angle):
+        '''
+        Returns steps for a given angle displacement (degrees)
+        '''
         return (angle / 360.0) * STEPS_PER_REV
 
 

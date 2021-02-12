@@ -12,6 +12,9 @@ Notes on movement:
 
 Attribution:
 - Code for serial interfacing from here: https://forum.arduino.cc/index.php?topic=288234.0
+
+TODO:
+- Make sure degrees are used throughout
 */
 
 // Includes
@@ -272,7 +275,7 @@ void getFieldValues() {
   if (sensor.readData(&magfield_x, &magfield_y, &magfield_z)) {
     // valid reading
     float new_magfield_magnitude = sqrt(magfield_x*magfield_x + magfield_y*magfield_y + magfield_z*magfield_z); // TODO: verify correct axes used
-    float new_magfield_angle = atan2(magfield_y, magfield_x); // TODO: verify correct axes used
+    float new_magfield_angle = atan2(magfield_y, magfield_x); // TODO: verify correct axes used, convert to deg
 
     magfield_magnitude = (weight_old*magfield_magnitude + new_magfield_magnitude) / (weight + 1);
     magfield_angle = (weight_old*magfield_angle + new_magfield_angle) / (weight + 1);
