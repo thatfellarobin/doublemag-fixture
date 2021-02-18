@@ -63,14 +63,14 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def setupTimer(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update)
-        self.timer.start(1000.0/60.0) # milliseconds between updates
+        self.timer.start(1000.0/15.0) # milliseconds between updates
 
     def update(self):
         # Get latest readings
-        # self.updateReadings()
+        self.updateReadings()
 
-        # Send motor commands
-        # TODO:
+        # Send field commands
+        self.sendField(field=self.slider_fieldAngle.value(), angle=self.slider_fieldIntensity.value())
 
         # Update UI
         self.updateUI()
@@ -79,7 +79,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def updateReadings(self):
         try:
             self.new_msg = self.ser.readline().decode().rstrip()
-            incoming_serial_words = self.latest_msg.split(',')
+            incoming_serial_words = self.new_msg.split(',')
             # Check the first entry in values to see what kind of data it is
             if incoming_serial_words[0] == 'steps':
                 # Assumed message contents:
@@ -130,7 +130,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.output_fieldIntensity.setText(str(self.mag[0]))
         self.output_fieldAngle.setText(str(self.mag[1]))
 
-    def resetField(self):
+    def resetFieldSliders(self):
         self.slider_fieldAngle.setValue(0.0)
         self.slider_fieldIntensity.setValue(1.0)
 
