@@ -4,17 +4,21 @@ Author: Robin Liu
 This sketch controls four stepper motors through EasyDriver or similar driver boards.
 It listens for serial input containing instructions for running the motors and executes those instructions.
 
-Notes on movement:
+Notes on movement and directionality:
 - Positive # of steps rotates the motor shaft clockwise as viewed from the motor body.
 - For the linear axis, clockwise rotation moves the magnet away from the workspace
 - Linear: (200*8) steps per rev / 8 mm per rev = 200 steps per mm
 - Angular: (200*8) steps per rev / 360 deg per rev = 4.44 steps per deg
+
+- For the magnetic field sensor, positive y points towards the front of the fixture, and positive z points downwards
 
 Attribution:
 - Code for serial interfacing from here: https://forum.arduino.cc/index.php?topic=288234.0
 
 TODO:
 - Make sure degrees are used throughout
+- Mag field angle can be rotated 180 deg without consequence. Adjust for this?
+- Polarity of magnets and magnetic sensor are yet to be resolved.
 */
 
 // Includes
@@ -33,14 +37,15 @@ const int limitPins[] = {10, 11}; // Pull down
 const byte msgNumChars = 32;
 char receivedChars[msgNumChars];
 bool newMsg = false; // flag to indicate if a new message has arrived
+byte msgType;
 
 // Data reporting variables
 unsigned long currentTime;
 unsigned long previousReportTime;
 unsigned long previousMagsenseTime;
 const unsigned int reportingTimeInterval = 100; // milliseconds between outgoing messages
-const unsigned int magsenseTimeInterval = 10; // milliseconds between magnetic field sensor readings FIXME: Does this sensor have relevant limitations?
-float magfield_x, magfield_y, magfield_z; // Raw magnetic measurement values TODO: Figure out which axis we don't care about.
+const unsigned int magsenseTimeInterval = 10; // milliseconds between magnetic field sensor readings
+float magfield_x, magfield_y, magfield_z; // Raw magnetic measurement values. x is irrelevant.
 float magfield_magnitude, magfield_angle; // Derived field characteristics. These values are filtered.
 
 
@@ -49,7 +54,7 @@ AccelStepper Motor_A(AccelStepper::DRIVER, stepPins[0], dirPins[0]);
 AccelStepper Motor_B(AccelStepper::DRIVER, stepPins[1], dirPins[1]);
 AccelStepper Motor_C(AccelStepper::DRIVER, stepPins[2], dirPins[2]);
 AccelStepper Motor_D(AccelStepper::DRIVER, stepPins[3], dirPins[3]);
-int fluxTarget = 1;
+float fluxTarget = 1;
 float angleTarget = 0;
 
 // Magnetic sensor control
@@ -78,7 +83,7 @@ void setup() {
   Serial.println("Serial ready");
 
   // Set up magnetic field sensor
-  if (magSensor.begin_I2C()) { // TODO: Figure out correct pins
+  if (magSensor.begin_I2C()) {
     Serial.println("Found a MLX90393 sensor");
   }
   // TODO: investigate built in filtering, gain, resolution, oversampling
@@ -99,7 +104,7 @@ void loop() {
 
   // # Check if a new position command has been issued.
   if (newMsg == true) {
-    parseMsg();
+    msgType = parseMsg();
     newMsg = false;
   }
 
@@ -117,7 +122,7 @@ void loop() {
 
   // (1) For a valid message, set motor target in accordance with the message
   // This must be called every loop since this is the proportional gain controller
-  setStepTarget();
+  setStepTarget(msgType);
   // (2) adjust target for limit switches.
   if (digitalRead(limitPins[0]) && Motor_A.targetPosition()-Motor_A.currentPosition()) > 0) {
     Motor_A.stop();
@@ -160,7 +165,7 @@ void recvWithEndMarker() {
   }
 }
 
-void parseMsg() {
+byte parseMsg() {
   /*
   Read through the received message
 
@@ -171,19 +176,24 @@ void parseMsg() {
 
   ## Message type 'f': direct field input
   bytes 2-4: 3 char string: flux intensity (mT).
-  bytes 5-9: 5 char string: field angle (rad). format #.###
+  bytes 5-9: 5 char string: field angle (deg). format ###.#
 
   ## Message type 's': stop immediately
+
+  returns: the message type
+  - 'f' for direct field input
+  - 's' for stop signal
+  - 'e' for invalid msg
   */
 
   bool validMsg = true;
-  int fluxTarget_temp = 0;
+  float fluxTarget_temp = 0;
   float angleTarget_temp = 0;
 
   int newDigit = 0;
   byte newControlMode = 0;
 
-  if receivedChars[0]-'a' == 'f' {
+  if receivedChars[0] == 'f' {
     // direct field control
     for (int i = 1; i < 4; i++) {
       // read flux intensity chars
@@ -198,20 +208,20 @@ void parseMsg() {
     }
     for (int i = 4; i < 9; i++) {
       // read field angle chars
-      if (i == 4) {
+      if (i >= 4 && i <= 6) {
         newDigit = receivedChars[i]-'0';
         if (newDigit >= 0 && newDigit <= 9) {
-          angleTarget_temp = newDigit;
+          angleTarget_temp = (10 * angleTarget_temp) + newDigit;
         }
         else {
           validMsg = false;
           break;
         }
       }
-      else if (i >= 6) {
+      else if (i == 8) {
         newDigit = receivedChars[i]-'0';
         if (newDigit >= 0 && newDigit <= 9) {
-          angleTarget_temp = angleTarget_temp + (newDigit / pow(10, i-5);
+          angleTarget_temp = angleTarget_temp + (newDigit / 10.0);
         }
         else {
           validMsg = false;
@@ -222,11 +232,15 @@ void parseMsg() {
     if (validMsg) {
       fluxTarget = fluxTarget_temp;
       angleTarget = angleTarget_temp;
+      return 'f'
+    }
+    else{
+      return 'e'
     }
   }
-  else if receivedChars[0]-'a' == 's' {
+  else if receivedChars[0] == 's' {
     // Stop immediately
-    // TODO:
+    return 's'
   }
 }
 
@@ -238,44 +252,51 @@ void runMotors() {
   Motor_D.run();
 }
 
-void setStepTarget() {
+void setStepTarget(byte msgType) {
   // Proportional controller to set the target step value
   // Apply a tolerance to avoid vibrations.
-  // TODO: angle can be rotated 180 deg without consequence. Adjust for this?
 
-  float fieldDiff = fluxTarget - magfield_magnitude; // If positive, the motors need to move closer together (negative rotation)
-  float angleDiff = angleTarget - magfield_angle; // TODO: figure out directionality
+  if (msgType == 'f') {
+    float fieldDiff = fluxTarget - magfield_magnitude; // If positive, the motors need to move closer together (negative rotation)
+    float angleDiff = angleTarget - magfield_angle; // If positive, the motors need to rotate towards the front
 
-  // Adjust gain values here
-  long linearSteps = -20 * fieldDiff; // 1 step for every 0.05 mT of error
-  long angularSteps = 4 * angleDiff; // 1 step for every 0.25 deg of error
+    // Adjust gain values here
+    long linearSteps = -20 * fieldDiff; // 1 step for every 0.05 mT of error
+    long angularSteps = 4 * angleDiff; // 1 step for every 0.25 deg of error
 
-  // Apply saturation values to prevent vibrations around the target
-  if (abs(linearSteps) <= 10) { // 10 steps = 0.05 mm
-    linearSteps = 0;
+    // Apply saturation values to prevent vibrations around the target
+    if (abs(linearSteps) <= 10) { // 10 steps = 0.05 mm
+      linearSteps = 0;
+    }
+    if (abs(angularSteps <= 1)) { // 1 step ~= 0.23 deg
+      angularSteps = 0;
+    }
+
+    Motor_A.moveTo(Motor_A.currentPosition() + linearSteps);
+    Motor_D.moveTo(Motor_D.currentPosition() + linearSteps);
+
+    Motor_B.moveTo(Motor_B.currentPosition() + angularSteps);
+    Motor_C.moveTo(Motor_C.currentPosition() - angularSteps);
   }
-  if (abs(angularSteps <= 1)) { // 1 step ~= 0.23 deg
-    angularSteps = 0;
+  else if (msgType == 's') {
+    Motor_A.stop()
+    Motor_B.stop()
+    Motor_C.stop()
+    Motor_D.stop()
   }
-
-  Motor_A.moveTo(Motor_A.currentPosition() + linearSteps);
-  Motor_D.moveTo(Motor_D.currentPosition() + linearSteps);
-
-  // TODO: Figure out directionality
-  Motor_B.moveTo(Motor_B.currentPosition() + angularSteps);
-  Motor_C.moveTo(Motor_C.currentPosition() - angularSteps);
 }
 
 void getFieldValues() {
   int weight_old = 4; // weight applied to old value for weighted average (new value has a weight of 1)
   // Read magnetic sensor data
   // Calculate field magnitude and angle
-  // Apply low pass filter - weighted average of previous value and new value
+  // Apply low pass filter - weighted average of previous value(s) and new value
 
   if (sensor.readData(&magfield_x, &magfield_y, &magfield_z)) {
     // valid reading
-    float new_magfield_magnitude = sqrt(magfield_x*magfield_x + magfield_y*magfield_y + magfield_z*magfield_z); // TODO: verify correct axes used
-    float new_magfield_angle = atan2(magfield_y, magfield_x); // TODO: verify correct axes used, convert to deg
+
+    float new_magfield_magnitude = sqrt(magfield_y*magfield_y + magfield_z*magfield_z);
+    float new_magfield_angle = atan2(magfield_y, -magfield_z) * (180.0/M_PI);
 
     magfield_magnitude = (weight_old*magfield_magnitude + new_magfield_magnitude) / (weight + 1);
     magfield_angle = (weight_old*magfield_angle + new_magfield_angle) / (weight + 1);

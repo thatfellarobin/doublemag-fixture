@@ -139,8 +139,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         Send desired field to arduino, for arduino to control.
         The sent message contains the following:
         - 1 char: 'f' to indicate the message type (field)
-        - 3 chars: digits indicating the field
-        - 5 chars: digits indicating the angle. 4th char is decimal
+        - 3 chars: digits indicating the field: '###' mT (zero padded in front)
+        - 5 chars: digits indicating the angle: '###.#' deg (zero padded in front)
 
             Parameters:
                 field (int): desired magnetic flux intensity (mT)
@@ -151,7 +151,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         Replaces send_msg()
         '''
         if abs(angle) <= 180 and field >= 1 and field <= 35:
-            msg = f'f{field:03d},{angle:05.3f}\n' # 3 characters for field, 5 characters for angle (zero-padded)
+            msg = f'f{field:03d}{angle:05.1f}\n' # 3 characters for field, 5 characters for angle (zero-padded)
             msg = msg.encode(encoding='ascii')
             self.ser.write(msg)
 
