@@ -178,6 +178,14 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         msg_encode = msg.encode(encoding='ascii')
         self.ser.write(msg_encode)
 
+    def abort(self):
+        # Send stop signal
+        msg = 's\n'
+        msg = msg.encode(encoding='ascii')
+        self.ser.write(msg)
+
+        # TODO: Turn off auto controls
+        # TODO: Should prevent sending further signals until reset or override button is hit
 
     def __steps_to_distance(self, steps):
         '''
