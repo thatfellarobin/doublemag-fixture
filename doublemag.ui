@@ -17,7 +17,7 @@
    <widget class="QSlider" name="slider_fieldIntensity">
     <property name="geometry">
      <rect>
-      <x>160</x>
+      <x>200</x>
       <y>80</y>
       <width>22</width>
       <height>291</height>
@@ -27,7 +27,7 @@
      <number>1</number>
     </property>
     <property name="maximum">
-     <number>35</number>
+     <number>30</number>
     </property>
     <property name="orientation">
      <enum>Qt::Vertical</enum>
@@ -42,7 +42,7 @@
    <widget class="QSlider" name="slider_fieldAngle">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>320</x>
       <y>80</y>
       <width>22</width>
       <height>291</height>
@@ -70,7 +70,7 @@
    <widget class="QLabel" name="label_fieldIntensity">
     <property name="geometry">
      <rect>
-      <x>160</x>
+      <x>200</x>
       <y>370</y>
       <width>101</width>
       <height>21</height>
@@ -83,7 +83,7 @@
    <widget class="QLabel" name="label_fieldAngle">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>320</x>
       <y>370</y>
       <width>101</width>
       <height>21</height>
@@ -96,15 +96,15 @@
    <widget class="QLabel" name="label_title">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>20</y>
+      <x>20</x>
+      <y>10</y>
       <width>391</width>
       <height>31</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>20</pointsize>
+      <pointsize>17</pointsize>
       <weight>75</weight>
       <bold>true</bold>
      </font>
@@ -116,7 +116,7 @@
    <widget class="QLineEdit" name="input_fieldIntensity">
     <property name="geometry">
      <rect>
-      <x>160</x>
+      <x>200</x>
       <y>390</y>
       <width>71</width>
       <height>20</height>
@@ -132,7 +132,7 @@
    <widget class="QLineEdit" name="output_fieldIntensity">
     <property name="geometry">
      <rect>
-      <x>160</x>
+      <x>200</x>
       <y>410</y>
       <width>71</width>
       <height>20</height>
@@ -148,7 +148,7 @@
    <widget class="QLineEdit" name="input_fieldAngle">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>320</x>
       <y>390</y>
       <width>71</width>
       <height>20</height>
@@ -164,7 +164,7 @@
    <widget class="QLineEdit" name="output_fieldAngle">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>320</x>
       <y>410</y>
       <width>71</width>
       <height>20</height>
@@ -185,7 +185,7 @@
      <rect>
       <x>40</x>
       <y>390</y>
-      <width>101</width>
+      <width>141</width>
       <height>20</height>
      </rect>
     </property>
@@ -198,7 +198,7 @@
      <rect>
       <x>40</x>
       <y>410</y>
-      <width>101</width>
+      <width>141</width>
       <height>20</height>
      </rect>
     </property>
@@ -209,7 +209,7 @@
    <widget class="QLabel" name="label_fieldIntensity_min">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>230</x>
       <y>360</y>
       <width>47</width>
       <height>13</height>
@@ -222,20 +222,20 @@
    <widget class="QLabel" name="label_fieldIntensity_max">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>230</x>
       <y>80</y>
       <width>47</width>
       <height>13</height>
      </rect>
     </property>
     <property name="text">
-     <string>35</string>
+     <string>30</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_fieldAngle_min">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>350</x>
       <y>360</y>
       <width>47</width>
       <height>13</height>
@@ -248,7 +248,7 @@
    <widget class="QLabel" name="label_fieldAngle_max">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>350</x>
       <y>80</y>
       <width>47</width>
       <height>13</height>
@@ -261,7 +261,7 @@
    <widget class="QLabel" name="label_fieldAngle_mid">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>350</x>
       <y>220</y>
       <width>47</width>
       <height>13</height>
@@ -277,7 +277,7 @@
       <x>20</x>
       <y>480</y>
       <width>761</width>
-      <height>61</height>
+      <height>71</height>
      </rect>
     </property>
     <property name="readOnly">
@@ -297,7 +297,106 @@
      </rect>
     </property>
     <property name="text">
-     <string>Latest serial message received</string>
+     <string>Latest serial message(s) received</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_resetField">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>350</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Reset Field</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_abort">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>80</y>
+      <width>141</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Abort Movement</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_wigglemode">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>80</y>
+      <width>321</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Wiggle Mode (for finding working grippers)</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_otherModes">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>50</y>
+      <width>221</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Other control modes</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_manualMode">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>50</y>
+      <width>221</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Manual control mode</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_zeroing">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>310</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Begin zeroing</string>
     </property>
    </widget>
   </widget>

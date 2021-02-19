@@ -16,7 +16,7 @@ Attribution:
 - Code for serial interfacing from here: https://forum.arduino.cc/index.php?topic=288234.0
 
 TODO:
-- Make sure degrees are used throughout
+- Make sure degrees are used throughout instead of radians
 - Mag field angle can be rotated 180 deg without consequence. Adjust for this?
 - Polarity of magnets and magnetic sensor are yet to be resolved.
 */
@@ -37,7 +37,9 @@ const int limitPins[] = {10, 11}; // Pull down
 const byte msgNumChars = 32;
 char receivedChars[msgNumChars];
 bool newMsg = false; // flag to indicate if a new message has arrived
-byte msgType;
+char msgType = 's';
+int activemotor = 0;
+int manualsteps = 0;
 
 // Data reporting variables
 unsigned long currentTime;
@@ -123,6 +125,7 @@ void loop() {
   // (1) For a valid message, set motor target in accordance with the message
   // This must be called every loop since this is the proportional gain controller
   setStepTarget(msgType);
+  msgType = (msgType=='m' ? 'e' : msgType) // only run a manual command once
   // (2) adjust target for limit switches.
   if (digitalRead(limitPins[0]) && Motor_A.targetPosition()-Motor_A.currentPosition()) > 0) {
     Motor_A.stop();
@@ -165,11 +168,9 @@ void recvWithEndMarker() {
   }
 }
 
-byte parseMsg() {
+char parseMsg() {
   /*
   Read through the received message
-
-  TODO: Implement a stop signal
 
   # Message descriptions:
   byte 1: one byte indicating the message type
@@ -180,10 +181,12 @@ byte parseMsg() {
 
   ## Message type 's': stop immediately
 
-  returns: the message type
-  - 'f' for direct field input
-  - 's' for stop signal
-  - 'e' for invalid msg
+  ## Message type 'm': manual control
+  byte 2: motor index (0, 1, 2, 3)
+  byte 3-7: 5 char string: number of steps
+  byte 8: direction of motion; '-' if negative and anything else for positive.
+
+  returns: the message type. 'e' for invalid msg.
   */
 
   bool validMsg = true;
@@ -191,9 +194,8 @@ byte parseMsg() {
   float angleTarget_temp = 0;
 
   int newDigit = 0;
-  byte newControlMode = 0;
 
-  if receivedChars[0] == 'f' {
+  if (receivedChars[0] == 'f') {
     // direct field control
     for (int i = 1; i < 4; i++) {
       // read flux intensity chars
@@ -234,13 +236,39 @@ byte parseMsg() {
       angleTarget = angleTarget_temp;
       return 'f'
     }
-    else{
+    else {
       return 'e'
     }
   }
-  else if receivedChars[0] == 's' {
+  else if (receivedChars[0] == 's') {
     // Stop immediately
     return 's'
+  }
+  else if (receivedChars[0] == 'm') {
+    // Manual control
+    activemotor = receivedChars[1] - '0';
+    manualsteps = 0;
+
+    for (int i = 2; i < 7; i++) {
+      // read # steps
+      newDigit = receivedChars[i]-'0';
+      if (newDigit >= 0 && newDigit <= 9) {
+        manualsteps = (10 * manualsteps) + newDigit;
+      }
+      else {
+        validMsg = false;
+        break;
+      }
+      if (receivedChars[7] == '-') {
+        manualsteps = -manualsteps;
+      }
+    }
+    if (validMsg) {
+      return 'm'
+    }
+    else {
+      return 'e'
+    }
   }
 }
 
@@ -253,10 +281,8 @@ void runMotors() {
 }
 
 void setStepTarget(byte msgType) {
-  // Proportional controller to set the target step value
-  // Apply a tolerance to avoid vibrations.
-
   if (msgType == 'f') {
+    // Proportional controller to set the target step value
     float fieldDiff = fluxTarget - magfield_magnitude; // If positive, the motors need to move closer together (negative rotation)
     float angleDiff = angleTarget - magfield_angle; // If positive, the motors need to rotate towards the front
 
@@ -265,10 +291,10 @@ void setStepTarget(byte msgType) {
     long angularSteps = 4 * angleDiff; // 1 step for every 0.25 deg of error
 
     // Apply saturation values to prevent vibrations around the target
-    if (abs(linearSteps) <= 10) { // 10 steps = 0.05 mm
+    if (abs(linearSteps) <= 10) { // 10 steps ~= 0.05 mm
       linearSteps = 0;
     }
-    if (abs(angularSteps <= 1)) { // 1 step ~= 0.23 deg
+    if (abs(angularSteps <= 2)) { // 2 steps ~= 0.5 deg
       angularSteps = 0;
     }
 
@@ -283,6 +309,22 @@ void setStepTarget(byte msgType) {
     Motor_B.stop()
     Motor_C.stop()
     Motor_D.stop()
+  }
+  else if (msgType == 'm') {
+    // Note: non active motors are not stopped. If they are to be stopped,
+    // then an explicit command should be sent from the external controller
+    if (activemotor == 0) {
+      Motor_A.moveTo(Motor_A.currentPosition() + manualsteps);
+    }
+    else if (activemotor == 1) {
+      Motor_B.moveTo(Motor_B.currentPosition() + manualsteps);
+    }
+    else if (activemotor == 2) {
+      Motor_C.moveTo(Motor_B.currentPosition() + manualsteps);
+    }
+    else if (activemotor == 3) {
+      Motor_D.moveTo(Motor_B.currentPosition() + manualsteps);
+    }
   }
 }
 

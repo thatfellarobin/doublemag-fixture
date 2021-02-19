@@ -28,6 +28,8 @@ MOTOR_STEPS_PER_REV = 200.0
 STEPS_PER_REV = MICROSTEP_FACTOR * MOTOR_STEPS_PER_REV
 MM_PER_REV = 8.0
 
+MANUAL_STEPS_LINEAR = (5 / MM_PER_REV) * STEPS_PER_REV
+MANUAL_STEPS_ANGULAR = (10 / 360)
 
 class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     # Notes on direction
@@ -42,11 +44,26 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setupTimer()
 
-        # UI connections
+        # Status flags
+        self.isManualControl = False
+        self.isAborted = True
+
+        # UI connections - main buttons
         self.button_resetField.clicked.connect(self.resetField)
+        self.button_abort.clicked.connect(self.abortMotion)
+        self.button_zeroing.clicked.connect(self.beginZeroing)
+        # UI connections - manual controls
+        self.button_motorA_l.connect(self.motorA_l)
+        self.button_motorA_r.connect(self.motorA_r)
+        self.button_motorB_u.connect(self.motorB_u)
+        self.button_motorB_d.connect(self.motorB_d)
+        self.button_motorC_l.connect(self.motorC_u)
+        self.button_motorC_r.connect(self.motorC_d)
+        self.button_motorD_u.connect(self.motorD_l)
+        self.button_motorD_d.connect(self.motorD_r)
 
         # Create serial connection
-        # self.ser = serial.Serial(ARDUINO_PORT, ARDUINO_BAUD, timeout=1)
+        self.ser = serial.Serial(ARDUINO_PORT, ARDUINO_BAUD, timeout=1)
 
         # Variables to track motor position
         self.motor_step_0 = np.array([0., 0., 0., 0.])
@@ -60,6 +77,17 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.new_msg = ''
         self.msg_history = ['']
 
+    def abortMotion(self):
+        # send stop signal
+        self.sendStop()
+
+        # lock out controls,
+        # prevent sending further field values
+        self.isAborted = True
+
+    def beginZeroing(self):
+        raise NotImplementedError
+
     def setupTimer(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update)
@@ -70,7 +98,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.updateReadings()
 
         # Send field commands
-        self.sendField(field=self.slider_fieldAngle.value(), angle=self.slider_fieldIntensity.value())
+        if not self.isAborted and not self.isManualControl:
+            self.sendField(field=self.slider_fieldAngle.value(), angle=self.slider_fieldIntensity.value())
 
         # Update UI
         self.updateUI()
@@ -103,14 +132,6 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                     pass
                 except IndexError:
                     pass
-            elif incoming_serial_words[0] == 'endstopviolation':
-                # the command is asking the motor to move beyond the end stop
-                raise NotImplementedError
-            elif incoming_serial_words[0] == 'nonvalidmsg':
-                # the message sent to the arduino was not valid
-                raise NotImplementedError
-            else:
-                pass
         except:
             pass
 
@@ -133,6 +154,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def resetFieldSliders(self):
         self.slider_fieldAngle.setValue(0.0)
         self.slider_fieldIntensity.setValue(1.0)
+        # reset button also
+        self.isAborted = False
 
     def sendField(self, field, angle):
         '''
@@ -157,35 +180,45 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
     def sendSteps(self, motor, rel_steps=0):
         '''
-        TODO: could use this for manual control
+        Send movement command to a signle motor
             Parameters:
-                motor (char): 'a', 'b', 'c', or 'd' indicating which motor is selected
-                step_target (int): the step value target that the motor should move towards
+                motor (int): 0-3 indicating which motor is selected
+                rel_steps (int): the step value target that the motor should move towards
             Returns:
                 None
         '''
-        raise NotImplementedError
 
-        if rel_steps > 999999 or rel_steps < -999999:
+        if rel_steps > 99999 or rel_steps < -99999:
             raise ValueError("# steps must be between -999999 and 999999")
+        if motor > 3 or motor < 0:
+            raise ValueError("Motor must be integer from 0-3")
 
-        if rel_steps >= 0:
-            direction = '+'
-        else:
-            direction = '-'
-
-        msg = motor + direction + '\n'
+        msg = 'm' + str(motor) + str(abs(rel_steps)) + ('-' if rel_steps < 0 else '+')
         msg_encode = msg.encode(encoding='ascii')
         self.ser.write(msg_encode)
 
-    def abort(self):
-        # Send stop signal
-        msg = 's\n'
-        msg = msg.encode(encoding='ascii')
+    def sendStop(self):
+        msg = 's\n'.encode(encoding='ascii')
         self.ser.write(msg)
 
-        # TODO: Turn off auto controls
-        # TODO: Should prevent sending further signals until reset or override button is hit
+    # region Motor manual commands
+    def motorA_l(self):
+        self.sendSteps(motor=0, rel_steps=MANUAL_STEPS_LINEAR)
+    def motorA_r(self):
+        self.sendSteps(motor=0, rel_steps=-MANUAL_STEPS_LINEAR)
+    def motorB_u(self):
+        self.sendSteps(motor=1, rel_steps=-MANUAL_STEPS_ANGULAR)
+    def motorB_d(self):
+        self.sendSteps(motor=1, rel_steps=MANUAL_STEPS_ANGULAR)
+    def motorC_u(self):
+        self.sendSteps(motor=2, rel_steps=MANUAL_STEPS_ANGULAR)
+    def motorC_d(self):
+        self.sendSteps(motor=2, rel_steps=-MANUAL_STEPS_ANGULAR)
+    def motorD_l(self):
+        self.sendSteps(motor=3, rel_steps=-MANUAL_STEPS_LINEAR)
+    def motorD_r(self):
+        self.sendSteps(motor=3, rel_steps=MANUAL_STEPS_LINEAR)
+    # endregion
 
     def __steps_to_distance(self, steps):
         '''
