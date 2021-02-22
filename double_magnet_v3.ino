@@ -349,7 +349,7 @@ void writeTelemetry() {
   // Send messages through serial to connected computer
 
   // Report motor positions
-  Serial.print("steps,");
+  Serial.print("data,");
   Serial.print(Motor_A.currentPosition());
   Serial.print(",");
   Serial.print(Motor_B.currentPosition());
@@ -362,6 +362,19 @@ void writeTelemetry() {
   Serial.print(magfield_magnitude);
   Serial.print(",");
   Serial.print(magfield_angle);
+  // Report limit switch status
+  Serial.print(",")
+  Serial.print(digitalRead(limitPins[0]) ? "1" : "0")
+  Serial.print(",")
+  Serial.print(digitalRead(limitPins[1]) ? "1" : "0")
   // End the message
   Serial.print("\r\n");
+
+
+  if (digitalRead(limitPins[0]) {
+    Serial.println("lim0")
+  }
+  if (digitalRead(limitPints[1])) {
+    Serial.println("lim1")
+  }
 }

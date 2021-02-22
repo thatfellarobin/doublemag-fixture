@@ -70,6 +70,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.motor_step = np.array([0., 0., 0., 0.])
         self.motor_pos_0 = np.array([0., 0., 0., 0.])
         self.motor_pos = np.array([0., 0., 0., 0.])
+        self.limitSwitchStatus = [0, 0]
 
         # Variables to track magnetic reading
         self.mag = np.array([0., 0.]) # magnitude (mT) and angle (deg)
@@ -91,7 +92,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def setupTimer(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update)
-        self.timer.start(1000.0/15.0) # milliseconds between updates
+        self.timer.start(1000.0/10.0) # milliseconds between updates
 
     def update(self):
         # Get latest readings
@@ -110,12 +111,14 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             self.new_msg = self.ser.readline().decode().rstrip()
             incoming_serial_words = self.new_msg.split(',')
             # Check the first entry in values to see what kind of data it is
-            if incoming_serial_words[0] == 'steps':
+            if incoming_serial_words[0] == 'data':
                 # Assumed message contents:
-                # 0: 'steps'
+                # 0: 'data'
                 # 1-4: step value of motor A, B, C, D
                 # 5: magnetic field magnitude (mT)
                 # 6: magnetic field angle (deg)
+                # 7: 1 or 0 representing limit switch 1
+                # 8: 1 or 0 representing limit switch 2
                 try:
                     # Update position
                     self.motor_step[:] = np.array([float(x) for x in incoming_serial_words[1:5]])
@@ -128,6 +131,9 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                     # Update magnetic
                     self.mag[0] = incoming_serial_words[5]
                     self.mag[1] = incoming_serial_words[6]
+
+                    # Update limit switch
+                    self.limitSwitchStatus = [int(x) for x in incoming_serial_words[7:]]
                 except ValueError:
                     pass
                 except IndexError:
@@ -154,8 +160,9 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def resetFieldSliders(self):
         self.slider_fieldAngle.setValue(0.0)
         self.slider_fieldIntensity.setValue(1.0)
-        # reset button also
+        # reset button also resets the control type.
         self.isAborted = False
+        self.isManualControl = False
 
     def sendField(self, field, angle):
         '''
@@ -203,20 +210,28 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
     # region Motor manual commands
     def motorA_l(self):
+        self.isManualControl = True
         self.sendSteps(motor=0, rel_steps=MANUAL_STEPS_LINEAR)
     def motorA_r(self):
+        self.isManualControl = True
         self.sendSteps(motor=0, rel_steps=-MANUAL_STEPS_LINEAR)
     def motorB_u(self):
+        self.isManualControl = True
         self.sendSteps(motor=1, rel_steps=-MANUAL_STEPS_ANGULAR)
     def motorB_d(self):
+        self.isManualControl = True
         self.sendSteps(motor=1, rel_steps=MANUAL_STEPS_ANGULAR)
     def motorC_u(self):
+        self.isManualControl = True
         self.sendSteps(motor=2, rel_steps=MANUAL_STEPS_ANGULAR)
     def motorC_d(self):
+        self.isManualControl = True
         self.sendSteps(motor=2, rel_steps=-MANUAL_STEPS_ANGULAR)
     def motorD_l(self):
+        self.isManualControl = True
         self.sendSteps(motor=3, rel_steps=-MANUAL_STEPS_LINEAR)
     def motorD_r(self):
+        self.isManualControl = True
         self.sendSteps(motor=3, rel_steps=MANUAL_STEPS_LINEAR)
     # endregion
 
