@@ -31,7 +31,7 @@ TODO:
 const int stepPins[] = {2, 4, 6, 8};
 const int dirPins[] = {3, 5, 7, 9};
 const int motorCount = 4;
-const int limitPins[] = {10, 11}; // Pull down
+const int limitPins[] = {10, 11}; // Pull-up resistors used.
 
 // Serial message variables
 const byte msgNumChars = 32;
@@ -127,10 +127,10 @@ void loop() {
   setStepTarget(msgType);
   msgType = (msgType=='m' ? 'e' : msgType) // only run a manual command once
   // (2) adjust target for limit switches.
-  if (digitalRead(limitPins[0]) && Motor_A.targetPosition()-Motor_A.currentPosition()) > 0) {
+  if (!digitalRead(limitPins[0]) && Motor_A.targetPosition()-Motor_A.currentPosition()) > 0) {
     Motor_A.stop();
   }
-  if (digitalRead(limitPins[1]) && Motor_D.targetPosition()-Motor_D.currentPosition() > 0) {
+  if (!digitalRead(limitPins[1]) && Motor_D.targetPosition()-Motor_D.currentPosition() > 0) {
     Motor_D.stop();
   }
   // TODO: (3) adjust target for field safety
@@ -364,17 +364,9 @@ void writeTelemetry() {
   Serial.print(magfield_angle);
   // Report limit switch status
   Serial.print(",")
-  Serial.print(digitalRead(limitPins[0]) ? "1" : "0")
+  Serial.print(digitalRead(limitPins[0]) ? "0" : "1") // Pull-up resistor
   Serial.print(",")
-  Serial.print(digitalRead(limitPins[1]) ? "1" : "0")
+  Serial.print(digitalRead(limitPins[1]) ? "0" : "1") // Pull-up resistor
   // End the message
   Serial.print("\r\n");
-
-
-  if (digitalRead(limitPins[0]) {
-    Serial.println("lim0")
-  }
-  if (digitalRead(limitPints[1])) {
-    Serial.println("lim1")
-  }
 }
