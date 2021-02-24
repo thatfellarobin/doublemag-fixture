@@ -125,9 +125,9 @@ void loop() {
   // (1) For a valid message, set motor target in accordance with the message
   // This must be called every loop since this is the proportional gain controller
   setStepTarget(msgType);
-  msgType = (msgType=='m' ? 'e' : msgType) // only run a manual command once
+  msgType = (msgType=='m' ? 'e' : msgType); // only run a manual command once
   // (2) adjust target for limit switches.
-  if (!digitalRead(limitPins[0]) && Motor_A.targetPosition()-Motor_A.currentPosition()) > 0) {
+  if (!digitalRead(limitPins[0]) && Motor_A.targetPosition()-Motor_A.currentPosition() > 0) {
     Motor_A.stop();
   }
   if (!digitalRead(limitPins[1]) && Motor_D.targetPosition()-Motor_D.currentPosition() > 0) {
@@ -234,15 +234,15 @@ char parseMsg() {
     if (validMsg) {
       fluxTarget = fluxTarget_temp;
       angleTarget = angleTarget_temp;
-      return 'f'
+      return 'f';
     }
     else {
-      return 'e'
+      return 'e';
     }
   }
   else if (receivedChars[0] == 's') {
     // Stop immediately
-    return 's'
+    return 's';
   }
   else if (receivedChars[0] == 'm') {
     // Manual control
@@ -264,10 +264,10 @@ char parseMsg() {
       }
     }
     if (validMsg) {
-      return 'm'
+      return 'm';
     }
     else {
-      return 'e'
+      return 'e';
     }
   }
 }
@@ -305,10 +305,10 @@ void setStepTarget(byte msgType) {
     Motor_C.moveTo(Motor_C.currentPosition() - angularSteps);
   }
   else if (msgType == 's') {
-    Motor_A.stop()
-    Motor_B.stop()
-    Motor_C.stop()
-    Motor_D.stop()
+    Motor_A.stop();
+    Motor_B.stop();
+    Motor_C.stop();
+    Motor_D.stop();
   }
   else if (msgType == 'm') {
     // Note: non active motors are not stopped. If they are to be stopped,
@@ -334,14 +334,14 @@ void getFieldValues() {
   // Calculate field magnitude and angle
   // Apply low pass filter - weighted average of previous value(s) and new value
 
-  if (sensor.readData(&magfield_x, &magfield_y, &magfield_z)) {
+  if (magSensor.readData(&magfield_x, &magfield_y, &magfield_z)) {
     // valid reading
 
     float new_magfield_magnitude = sqrt(magfield_y*magfield_y + magfield_z*magfield_z);
     float new_magfield_angle = atan2(magfield_y, -magfield_z) * (180.0/M_PI);
 
-    magfield_magnitude = (weight_old*magfield_magnitude + new_magfield_magnitude) / (weight + 1);
-    magfield_angle = (weight_old*magfield_angle + new_magfield_angle) / (weight + 1);
+    magfield_magnitude = (weight_old*magfield_magnitude + new_magfield_magnitude) / (weight_old + 1);
+    magfield_angle = (weight_old*magfield_angle + new_magfield_angle) / (weight_old + 1);
   }
 }
 
@@ -363,10 +363,10 @@ void writeTelemetry() {
   Serial.print(",");
   Serial.print(magfield_angle);
   // Report limit switch status
-  Serial.print(",")
-  Serial.print(digitalRead(limitPins[0]) ? "0" : "1") // Pull-up resistor
-  Serial.print(",")
-  Serial.print(digitalRead(limitPins[1]) ? "0" : "1") // Pull-up resistor
+  Serial.print(",");
+  Serial.print(digitalRead(limitPins[0]) ? "0" : "1"); // Pull-up resistor
+  Serial.print(",");
+  Serial.print(digitalRead(limitPins[1]) ? "0" : "1"); // Pull-up resistor
   // End the message
   Serial.print("\r\n");
 }
