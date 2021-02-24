@@ -4,8 +4,10 @@ import os
 import time
 
 from PyQt5 import uic
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, QThread
 from PyQt5.QtWidgets import QMainWindow
+
+from subthreads import Thread_Wiggler
 
 #=========================================================
 # UI Setup
@@ -46,6 +48,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
         # Status flags
         self.isManualControl = False
+        self.isAltControl = False # for subthreads etc. TODO:
         self.isAborted = True
 
         # UI connections - main buttons
@@ -64,6 +67,13 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
         # Create serial connection
         self.ser = serial.Serial(ARDUINO_PORT, ARDUINO_BAUD, timeout=1)
+
+        # Setup subthreads
+        self.thread = QThread()
+        self.wiggle_thread = Thread_Wiggler(self.ser)
+        self.wiggle_thread.moveToThread(self.thread)
+        self.thread.started.connect(self.wiggle_thread.run)
+        #self.wiggle_thread.angleSignal.connect(TODO:)
 
         # Variables to track motor position
         self.motor_step_0 = np.array([0., 0., 0., 0.])
@@ -99,7 +109,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.updateReadings()
 
         # Send field commands
-        if not self.isAborted and not self.isManualControl:
+        if not self.isAborted and not self.isManualControl and not self.isAltControl:
             self.sendField(field=self.slider_fieldAngle.value(), angle=self.slider_fieldIntensity.value())
 
         # Update UI
