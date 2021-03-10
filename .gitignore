@@ -131,3 +131,6 @@ dmypy.json
 # VScode stuff
 .vscode/
 *.code-workspace
+
+# Project-specific stuff
+*.mat
