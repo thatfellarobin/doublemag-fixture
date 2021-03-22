@@ -101,13 +101,15 @@ void loop() {
   msgType = (msgType=='m' ? 'e' : msgType); // only run a manual command once
   // (2) adjust target for limit switches.
   if (!digitalRead(limitPins[0]) && Motor_A.targetPosition()-Motor_A.currentPosition() > 0) {
-    Motor_A.stop();
+    // Don't use .stop() here, it doesn't work as well because it accounts for the set speed not being 0
+    Motor_A.moveTo(Motor_A.currentPosition());
   }
   if (!digitalRead(limitPins[1]) && Motor_D.targetPosition()-Motor_D.currentPosition() > 0) {
-    Motor_D.stop();
+    // Don't use .stop() here, it doesn't work as well because it accounts for the set speed not being 0
+    Motor_D.moveTo(Motor_D.currentPosition());
   }
 
-  // # Run motors -
+  // # Run motors
   runMotors();
 
   // # Handle periodic data reporting
@@ -210,10 +212,10 @@ void runMotors() {
 
 void setStepTarget(byte msgType) {
   if (msgType == 's') {
-    Motor_A.stop();
-    Motor_B.stop();
-    Motor_C.stop();
-    Motor_D.stop();
+    Motor_A.moveTo(Motor_A.currentPosition());
+    Motor_B.moveTo(Motor_B.currentPosition());
+    Motor_C.moveTo(Motor_C.currentPosition());
+    Motor_D.moveTo(Motor_D.currentPosition());
   }
   else if (msgType == 'm') {
     // Note: non active motors are not stopped. If they are to be stopped,

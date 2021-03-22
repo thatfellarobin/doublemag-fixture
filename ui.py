@@ -36,8 +36,10 @@ MOTOR_STEPS_PER_REV = 200.0
 STEPS_PER_REV = MICROSTEP_FACTOR * MOTOR_STEPS_PER_REV
 MM_PER_REV = 8.0
 
-MANUAL_STEPS_LINEAR = (2 / MM_PER_REV) * STEPS_PER_REV
-MANUAL_STEPS_ANGULAR = (1 / 360) * STEPS_PER_REV
+MANUAL_STEPS_LINEAR = (5 / MM_PER_REV) * STEPS_PER_REV
+MANUAL_STEPS_ANGULAR = (5 / 360) * STEPS_PER_REV
+BIG_MANUAL_STEPS_LINEAR = (0.25 / MM_PER_REV) * STEPS_PER_REV
+BIG_MANUAL_STEPS_ANGULAR = (0.5 / 360) * STEPS_PER_REV
 
 class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     # Notes on direction
@@ -70,6 +72,14 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.button_motorC_d.clicked.connect(self.motorC_d)
         self.button_motorD_l.clicked.connect(self.motorD_l)
         self.button_motorD_r.clicked.connect(self.motorD_r)
+        self.button_motorA_l_2.clicked.connect(self.motorA_l_2)
+        self.button_motorA_r_2.clicked.connect(self.motorA_r_2)
+        self.button_motorB_u_2.clicked.connect(self.motorB_u_2)
+        self.button_motorB_d_2.clicked.connect(self.motorB_d_2)
+        self.button_motorC_u_2.clicked.connect(self.motorC_u_2)
+        self.button_motorC_d_2.clicked.connect(self.motorC_d_2)
+        self.button_motorD_l_2.clicked.connect(self.motorD_l_2)
+        self.button_motorD_r_2.clicked.connect(self.motorD_r_2)
 
         # Create serial connection
         self.ser = serial.Serial(ARDUINO_PORT, ARDUINO_BAUD, timeout=1)
@@ -93,8 +103,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
         # Load calibration matfile
         matfile = loadmat(MAGNET_CALIB_MATFILE)
-        mat_r = np.squeeze(matfile['r']) * 1000 # Convert T to mT
-        mat_B = np.squeeze(matfile['B_map_norm']) * 1000 # Convert m to mm
+        mat_r = np.squeeze(matfile['r']) * 1000 # Convert m to mm
+        mat_B = np.squeeze(matfile['B_map_norm']) * 1000 # Convert T to mT
         self.mat_r_rev = np.flip(mat_r) # np.interp requires increasing xp array as per documentation, this is for that case
         self.mat_B_rev = np.flip(mat_B) # np.interp requires increasing xp array as per documentation, this is for that case
 
@@ -109,8 +119,10 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         # prevent sending further field values
         self.isAborted = True
 
-    def beginZeroing(self, zeroing_point=165, zeroing_separation=45.75):
+    def beginZeroing(self):
         # Manually navigate to the zeroing point and then hit the zeroing button
+        zeroing_point=195
+        zeroing_separation=45.75
 
         # Zero the linear axis
         self.motor_pos_0[0] = zeroing_point - zeroing_separation
@@ -120,9 +132,16 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.motor_pos_0[1] = 0
         self.motor_pos_0[2] = 0
 
+
         # Match zeroed position with zeroed steps.
         for i in range(4):
             self.motor_step_0[i] = self.motor_step[i]
+
+        print(zeroing_point)
+        print(zeroing_separation)
+        print(self.motor_pos_0)
+        print(self.motor_step_0)
+
 
     def setupTimer(self):
         self.timer = QTimer()
@@ -135,7 +154,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
         # Send field commands
         if not self.isAborted and not self.isManualControl and not self.isAltControl:
-            self.sendField(field=self.slider_fieldAngle.value(), angle=self.slider_fieldIntensity.value())
+            self.sendField(field=self.slider_fieldIntensity.value(), angle=self.slider_fieldAngle.value())
 
         # Update UI
         self.updateUI()
@@ -164,8 +183,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                     self.motor_pos[3] = self.motor_pos_0[3] + self.__steps_to_distance(stepdiff[3])
 
                     # Update magnetic
-                    self.mag[0] = incoming_serial_words[5]
-                    self.mag[1] = incoming_serial_words[6]
+                    # self.mag[0] = incoming_serial_words[5]
+                    # self.mag[1] = incoming_serial_words[6]
 
                     # Update limit switch
                     self.limitSwitchStatus = [int(x) for x in incoming_serial_words[7:]]
@@ -177,7 +196,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             pass
 
     def updateUI(self):
-        # Update the commanded field angle according to slider position
+        # Update the commanded field readout according to slider position
         self.input_fieldAngle.setText(str(self.slider_fieldAngle.value()))
         self.input_fieldIntensity.setText(str(self.slider_fieldIntensity.value()))
 
@@ -189,8 +208,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.output_latestMsg.setPlainText('\n'.join(self.msg_history))
 
         # Update the field readings from the latest message
-        self.output_fieldIntensity.setText(str(self.mag[0]))
-        self.output_fieldAngle.setText(str(self.mag[1]))
+        # self.output_fieldIntensity.setText(str(self.mag[0]))
+        # self.output_fieldAngle.setText(str(self.mag[1]))
 
     def resetField(self):
         self.slider_fieldAngle.setValue(0.0)
@@ -198,37 +217,42 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         # reset button also resets the control type.
         self.isAborted = False
         self.isManualControl = False
+        self.isAltControl = False
 
     def sendField(self, field, angle):
         '''
         Send desired field to arduino, for arduino to control.
-        The sent message contains the following:
-        - 1 char: 'f' to indicate the message type (field)
-        - 3 chars: digits indicating the field: '###' mT (zero padded in front)
-        - 5 chars: digits indicating the angle: '###.#' deg (zero padded in front)
 
             Parameters:
-                field (int): desired magnetic flux intensity (mT)
+                field (float): desired magnetic flux intensity (mT)
                 angle (float): desired field angle (deg)
             Returns:
                 None
 
         Replaces send_msg()
         '''
-        desired_r = np.interp(field, self.mat_B_rev, self.mat_r_rev) # use reversed because xp must be increasing as per np.interp documetation
 
-        # Absolute step target - linear axis
-        step_a = self.motor_step_0[0] + self.__distance_to_steps(desired_r - self.motor_pos_0[0])
-        step_d = self.motor_step_0[3] + self.__distance_to_steps(desired_r - self.motor_pos_0[3])
+        print(f'field: {field}')
+        print(f'angle: {angle}')
 
-        # Absolute step target - rotational axis
-        step_b = self.motor_step_0[1] + self.__angle_to_steps(angle - self.motor_pos_0[1])
-        step_c = self.motor_step_0[2] - self.__angle_to_steps(angle - self.motor_pos_0[2]) # Subtract because motor c local axis is opposite of global axis
+        if field > 35 or field < 1:
+            print('field out of bounds: {field} mT')
+        else:
+            desired_r = np.interp(field, self.mat_B_rev, self.mat_r_rev) # use reversed because xp must be increasing as per np.interp documetation
+            print(f'desired r: {desired_r}')
 
-        self.sendSteps(motor=0, abs_steps=step_a)
-        self.sendSteps(motor=1, abs_steps=step_b)
-        self.sendSteps(motor=2, abs_steps=step_c)
-        self.sendSteps(motor=3, abs_steps=step_d)
+            # Absolute step target - linear axis
+            step_a = self.motor_step_0[0] + self.__distance_to_steps(desired_r - self.motor_pos_0[0])
+            step_d = self.motor_step_0[3] + self.__distance_to_steps(desired_r - self.motor_pos_0[3])
+
+            # Absolute step target - rotational axis
+            step_b = self.motor_step_0[1] + self.__angle_to_steps(angle - self.motor_pos_0[1])
+            step_c = self.motor_step_0[2] - self.__angle_to_steps(angle - self.motor_pos_0[2]) # Subtract because motor c local axis is opposite of global axis
+
+            self.sendSteps(motor=0, abs_steps=step_a)
+            self.sendSteps(motor=1, abs_steps=step_b)
+            self.sendSteps(motor=2, abs_steps=step_c)
+            self.sendSteps(motor=3, abs_steps=step_d)
 
     def sendSteps(self, motor, abs_steps=0):
         '''
@@ -279,6 +303,30 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def motorD_r(self):
         self.isManualControl = True
         self.sendSteps(motor=3, abs_steps=self.motor_step[3] + MANUAL_STEPS_LINEAR)
+    def motorA_l_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] + MANUAL_STEPS_LINEAR)
+    def motorA_r_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] - MANUAL_STEPS_LINEAR)
+    def motorB_u_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] - MANUAL_STEPS_ANGULAR)
+    def motorB_d_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] + MANUAL_STEPS_ANGULAR)
+    def motorC_u_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] + MANUAL_STEPS_ANGULAR)
+    def motorC_d_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] - MANUAL_STEPS_ANGULAR)
+    def motorD_l_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] - MANUAL_STEPS_LINEAR)
+    def motorD_r_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] + MANUAL_STEPS_LINEAR)
     # endregion
 
     def __steps_to_distance(self, steps):
@@ -287,11 +335,11 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         '''
         return (steps / STEPS_PER_REV) * MM_PER_REV
 
-    def __distance_to_steps(self, position):
+    def __distance_to_steps(self, distance):
         '''
         Returns steps for a given mm displacement
         '''
-        return (position /MM_PER_REV) * STEPS_PER_REV
+        return (distance /MM_PER_REV) * STEPS_PER_REV
 
     def __steps_to_angle(self, steps):
         '''
