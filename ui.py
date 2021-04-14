@@ -2,6 +2,7 @@ import serial
 import numpy as np
 import os
 import time
+from datetime import datetime
 from scipy.io import loadmat
 
 from PyQt5 import uic
@@ -58,11 +59,13 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.isManualControl = False
         self.isAltControl = False # for subthreads etc. TODO:
         self.isAborted = True
+        self.isDataRecording = False
 
         # UI connections - main buttons
         self.button_resetField.clicked.connect(self.resetField)
         self.button_abort.clicked.connect(self.abortMotion)
         self.button_zeroing.clicked.connect(self.beginZeroing)
+        self.button_recordData.clicked.connect(self.toggleDataRecording)
         # UI connections - manual controls
         self.button_motorA_l.clicked.connect(self.motorA_l)
         self.button_motorA_r.clicked.connect(self.motorA_r)
@@ -142,74 +145,86 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         print(self.motor_pos_0)
         print(self.motor_step_0)
 
+    def toggleDataRecording(self):
+        '''
+        sets/unsets data recording flag, so that other periodic functions can know if they're supposed to be recording data or not
+        '''
+        if not self.isDataRecording:
+            datestring = datetime.today().strftime('%Y-%m-%d_%H-%M-%S')
+            self.fout = open(f'doublemagdata_{datestring}.txt', 'a')
+            self.fout.write(f'{datestring}\n')
 
-    def setupTimer(self):
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update)
-        self.timer.start(1000.0/12.0) # milliseconds between updates
+            headings = [
+                'time (s)',
+                'commanded field intensity (mT)',
+                'commanded field angle (deg)',
+                'motor A position (mm)',
+                'motor B position (mm)',
+                'motor C position (mm)',
+                'motor D position (mm)',
+                'limit switch 1 status',
+                'limit switch 2 status'
+            ]
+            self.fout.write(','.join(headings) + '\n')
 
-    def update(self):
-        # Get latest readings
-        self.updateReadings()
+            self.dataRecordingStarttime = time.time()
+            self.output_dataRecordingStatus.setText(f'data recording started at: {datestring}')
+            self.isDataRecording = True
+        else:
+            self.isDataRecording = False
+            self.output_dataRecordingStatus.setText('stopped recording')
+            self.fout.close()
 
-        # Send field commands
-        if not self.isAborted and not self.isManualControl and not self.isAltControl:
-            self.sendField(field=self.slider_fieldIntensity.value(), angle=self.slider_fieldAngle.value())
-
-        # Update UI
-        self.updateUI()
-        # raise NotImplementedError
-
-    def updateReadings(self):
-        try:
-            self.new_msg = self.ser.readline().decode().rstrip()
-            incoming_serial_words = self.new_msg.split(',')
-            # Check the first entry in values to see what kind of data it is
-            if incoming_serial_words[0] == 'data':
-                # Assumed message contents:
-                # 0: 'data'
-                # 1-4: step value of motor A, B, C, D
-                # 5: magnetic field magnitude (mT)
-                # 6: magnetic field angle (deg)
-                # 7: 1 or 0 representing limit switch 1
-                # 8: 1 or 0 representing limit switch 2
-                try:
-                    # Update position
-                    self.motor_step[:] = np.array([float(x) for x in incoming_serial_words[1:5]])
-                    stepdiff = self.motor_step - self.motor_step_0
-                    self.motor_pos[0] = self.motor_pos_0[0] + self.__steps_to_distance(stepdiff[0])
-                    self.motor_pos[1] = self.motor_pos_0[1] + self.__steps_to_angle(stepdiff[1])
-                    self.motor_pos[2] = -(self.motor_pos_0[2] + self.__steps_to_angle(stepdiff[2]))
-                    self.motor_pos[3] = self.motor_pos_0[3] + self.__steps_to_distance(stepdiff[3])
-
-                    # Update magnetic
-                    # self.mag[0] = incoming_serial_words[5]
-                    # self.mag[1] = incoming_serial_words[6]
-
-                    # Update limit switch
-                    self.limitSwitchStatus = [int(x) for x in incoming_serial_words[7:]]
-                except ValueError:
-                    pass
-                except IndexError:
-                    pass
-        except:
-            pass
-
-    def updateUI(self):
-        # Update the commanded field readout according to slider position
-        self.input_fieldAngle.setText(str(self.slider_fieldAngle.value()))
-        self.input_fieldIntensity.setText(str(self.slider_fieldIntensity.value()))
-
-        # Update the received messages box with latest messages if the new message is unique
-        if self.new_msg != self.msg_history[-1]:
-            self.msg_history.append(self.new_msg)
-            if len(self.msg_history) > MSG_HISTORY_LENGTH:
-                self.msg_history.pop(0)
-        self.output_latestMsg.setPlainText('\n'.join(self.msg_history))
-
-        # Update the field readings from the latest message
-        # self.output_fieldIntensity.setText(str(self.mag[0]))
-        # self.output_fieldAngle.setText(str(self.mag[1]))
+    # region Motor manual commands
+    def motorA_l(self):
+        self.isManualControl = True
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] + MANUAL_STEPS_LINEAR)
+    def motorA_r(self):
+        self.isManualControl = True
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] - MANUAL_STEPS_LINEAR)
+    def motorB_u(self):
+        self.isManualControl = True
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] - MANUAL_STEPS_ANGULAR)
+    def motorB_d(self):
+        self.isManualControl = True
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] + MANUAL_STEPS_ANGULAR)
+    def motorC_u(self):
+        self.isManualControl = True
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] + MANUAL_STEPS_ANGULAR)
+    def motorC_d(self):
+        self.isManualControl = True
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] - MANUAL_STEPS_ANGULAR)
+    def motorD_l(self):
+        self.isManualControl = True
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] - MANUAL_STEPS_LINEAR)
+    def motorD_r(self):
+        self.isManualControl = True
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] + MANUAL_STEPS_LINEAR)
+    def motorA_l_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] + MANUAL_STEPS_LINEAR)
+    def motorA_r_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] - MANUAL_STEPS_LINEAR)
+    def motorB_u_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] - MANUAL_STEPS_ANGULAR)
+    def motorB_d_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] + MANUAL_STEPS_ANGULAR)
+    def motorC_u_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] + MANUAL_STEPS_ANGULAR)
+    def motorC_d_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] - MANUAL_STEPS_ANGULAR)
+    def motorD_l_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] - MANUAL_STEPS_LINEAR)
+    def motorD_r_2(self):
+        self.isManualControl = True
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] + MANUAL_STEPS_LINEAR)
+    # endregion
 
     def resetField(self):
         self.slider_fieldAngle.setValue(0.0)
@@ -278,56 +293,93 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         msg = 's\n'.encode(encoding='ascii')
         self.ser.write(msg)
 
-    # region Motor manual commands
-    def motorA_l(self):
-        self.isManualControl = True
-        self.sendSteps(motor=0, abs_steps=self.motor_step[0] + MANUAL_STEPS_LINEAR)
-    def motorA_r(self):
-        self.isManualControl = True
-        self.sendSteps(motor=0, abs_steps=self.motor_step[0] - MANUAL_STEPS_LINEAR)
-    def motorB_u(self):
-        self.isManualControl = True
-        self.sendSteps(motor=1, abs_steps=self.motor_step[1] - MANUAL_STEPS_ANGULAR)
-    def motorB_d(self):
-        self.isManualControl = True
-        self.sendSteps(motor=1, abs_steps=self.motor_step[1] + MANUAL_STEPS_ANGULAR)
-    def motorC_u(self):
-        self.isManualControl = True
-        self.sendSteps(motor=2, abs_steps=self.motor_step[2] + MANUAL_STEPS_ANGULAR)
-    def motorC_d(self):
-        self.isManualControl = True
-        self.sendSteps(motor=2, abs_steps=self.motor_step[2] - MANUAL_STEPS_ANGULAR)
-    def motorD_l(self):
-        self.isManualControl = True
-        self.sendSteps(motor=3, abs_steps=self.motor_step[3] - MANUAL_STEPS_LINEAR)
-    def motorD_r(self):
-        self.isManualControl = True
-        self.sendSteps(motor=3, abs_steps=self.motor_step[3] + MANUAL_STEPS_LINEAR)
-    def motorA_l_2(self):
-        self.isManualControl = True
-        self.sendSteps(motor=0, abs_steps=self.motor_step[0] + MANUAL_STEPS_LINEAR)
-    def motorA_r_2(self):
-        self.isManualControl = True
-        self.sendSteps(motor=0, abs_steps=self.motor_step[0] - MANUAL_STEPS_LINEAR)
-    def motorB_u_2(self):
-        self.isManualControl = True
-        self.sendSteps(motor=1, abs_steps=self.motor_step[1] - MANUAL_STEPS_ANGULAR)
-    def motorB_d_2(self):
-        self.isManualControl = True
-        self.sendSteps(motor=1, abs_steps=self.motor_step[1] + MANUAL_STEPS_ANGULAR)
-    def motorC_u_2(self):
-        self.isManualControl = True
-        self.sendSteps(motor=2, abs_steps=self.motor_step[2] + MANUAL_STEPS_ANGULAR)
-    def motorC_d_2(self):
-        self.isManualControl = True
-        self.sendSteps(motor=2, abs_steps=self.motor_step[2] - MANUAL_STEPS_ANGULAR)
-    def motorD_l_2(self):
-        self.isManualControl = True
-        self.sendSteps(motor=3, abs_steps=self.motor_step[3] - MANUAL_STEPS_LINEAR)
-    def motorD_r_2(self):
-        self.isManualControl = True
-        self.sendSteps(motor=3, abs_steps=self.motor_step[3] + MANUAL_STEPS_LINEAR)
-    # endregion
+    def setupTimer(self):
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update)
+        self.timer.start(1000.0/12.0) # milliseconds between updates
+
+    def update(self):
+        # Get latest readings
+        self.updateReadings()
+
+        # Send field commands
+        if not self.isAborted and not self.isManualControl and not self.isAltControl:
+            self.sendField(field=self.slider_fieldIntensity.value(), angle=self.slider_fieldAngle.value())
+
+        # Update UI
+        self.updateUI()
+
+        # Record data
+        try:
+            self.fout
+            self.dataRecordingStarttime
+        except NameError:
+            pass
+        else:
+            dataTime = time.time() - self.dataRecordingStarttime
+            self.fout.write(
+                str(round(dataTime, 3)) +
+                ',' +
+                str(self.slider_fieldIntensity.value()) +
+                ',' +
+                str(self.slider_fieldAngle.value()) +
+                ',' +
+                ','.join(self.motor_pos) +
+                ',' +
+                ','.join(limitSwitchStatus) +
+                '\n')
+
+
+    def updateReadings(self):
+        try:
+            self.new_msg = self.ser.readline().decode().rstrip()
+            incoming_serial_words = self.new_msg.split(',')
+            # Check the first entry in values to see what kind of data it is
+            if incoming_serial_words[0] == 'data':
+                # Assumed message contents:
+                # 0: 'data'
+                # 1-4: step value of motor A, B, C, D
+                # 5: magnetic field magnitude (mT)
+                # 6: magnetic field angle (deg)
+                # 7: 1 or 0 representing limit switch 1
+                # 8: 1 or 0 representing limit switch 2
+                try:
+                    # Update position
+                    self.motor_step[:] = np.array([float(x) for x in incoming_serial_words[1:5]])
+                    stepdiff = self.motor_step - self.motor_step_0
+                    self.motor_pos[0] = self.motor_pos_0[0] + self.__steps_to_distance(stepdiff[0])
+                    self.motor_pos[1] = self.motor_pos_0[1] + self.__steps_to_angle(stepdiff[1])
+                    self.motor_pos[2] = -(self.motor_pos_0[2] + self.__steps_to_angle(stepdiff[2]))
+                    self.motor_pos[3] = self.motor_pos_0[3] + self.__steps_to_distance(stepdiff[3])
+
+                    # Update magnetic
+                    # self.mag[0] = incoming_serial_words[5]
+                    # self.mag[1] = incoming_serial_words[6]
+
+                    # Update limit switch
+                    self.limitSwitchStatus = [int(x) for x in incoming_serial_words[7:]]
+                except ValueError:
+                    pass
+                except IndexError:
+                    pass
+        except:
+            pass
+
+    def updateUI(self):
+        # Update the commanded field readout according to slider position
+        self.input_fieldAngle.setText(str(self.slider_fieldAngle.value()))
+        self.input_fieldIntensity.setText(str(self.slider_fieldIntensity.value()))
+
+        # Update the received messages box with latest messages if the new message is unique
+        if self.new_msg != self.msg_history[-1]:
+            self.msg_history.append(self.new_msg)
+            if len(self.msg_history) > MSG_HISTORY_LENGTH:
+                self.msg_history.pop(0)
+        self.output_latestMsg.setPlainText('\n'.join(self.msg_history))
+
+        # Update the field readings from the latest message
+        # self.output_fieldIntensity.setText(str(self.mag[0]))
+        # self.output_fieldAngle.setText(str(self.mag[1]))
 
     def __steps_to_distance(self, steps):
         '''
