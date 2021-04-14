@@ -132,22 +132,6 @@
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QLineEdit" name="output_fieldIntensity">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>410</y>
-      <width>71</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-   </widget>
    <widget class="QLineEdit" name="input_fieldAngle">
     <property name="geometry">
      <rect>
@@ -164,25 +148,6 @@
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QLineEdit" name="output_fieldAngle">
-    <property name="geometry">
-     <rect>
-      <x>320</x>
-      <y>410</y>
-      <width>71</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="autoFillBackground">
-     <bool>false</bool>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_cmdValue">
     <property name="geometry">
      <rect>
@@ -195,18 +160,8 @@
     <property name="text">
      <string>Commanded Value</string>
     </property>
-   </widget>
-   <widget class="QLabel" name="label_measValue">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>410</y>
-      <width>141</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Measured Value</string>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="label_fieldIntensity_min">
@@ -295,12 +250,12 @@
      <rect>
       <x>20</x>
       <y>440</y>
-      <width>231</width>
+      <width>761</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>Latest serial message(s) received</string>
+     <string>Latest serial message(s) received (duplicates removed)</string>
     </property>
    </widget>
    <widget class="QPushButton" name="button_resetField">
@@ -339,20 +294,20 @@
    <widget class="QCheckBox" name="checkBox_wigglemode">
     <property name="geometry">
      <rect>
-      <x>460</x>
+      <x>440</x>
       <y>80</y>
       <width>321</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string>Wiggle Mode (for finding working grippers)</string>
+     <string>Wiggle (for finding working grippers)</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_otherModes">
     <property name="geometry">
      <rect>
-      <x>460</x>
+      <x>440</x>
       <y>50</y>
       <width>221</width>
       <height>16</height>
@@ -624,6 +579,56 @@
     </property>
     <property name="text">
      <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_recordData">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>120</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Record Data</string>
+    </property>
+   </widget>
+   <widget class="QPlainTextEdit" name="output_dataRecordingStatus">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>150</y>
+      <width>341</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+    <property name="overwriteMode">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_dataRecordingStatus">
+    <property name="geometry">
+     <rect>
+      <x>620</x>
+      <y>130</y>
+      <width>161</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>MS Shell Dlg 2</family>
+     </font>
+    </property>
+    <property name="text">
+     <string>Data Recording Status</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
   </widget>
