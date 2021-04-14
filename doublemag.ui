@@ -586,12 +586,12 @@
      <rect>
       <x>440</x>
       <y>120</y>
-      <width>91</width>
+      <width>171</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>Record Data</string>
+     <string>Start / Stop data recording</string>
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="output_dataRecordingStatus">
@@ -629,19 +629,6 @@
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="button_recordData_stop">
-    <property name="geometry">
-     <rect>
-      <x>540</x>
-      <y>120</y>
-      <width>91</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Stop Recording</string>
     </property>
    </widget>
   </widget>
