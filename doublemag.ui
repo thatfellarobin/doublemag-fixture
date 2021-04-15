@@ -261,9 +261,9 @@
    <widget class="QPushButton" name="button_resetField">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>20</x>
       <y>350</y>
-      <width>141</width>
+      <width>161</width>
       <height>23</height>
      </rect>
     </property>
@@ -274,9 +274,9 @@
    <widget class="QPushButton" name="button_abort">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>20</x>
       <y>80</y>
-      <width>141</width>
+      <width>161</width>
       <height>51</height>
      </rect>
     </property>
@@ -327,10 +327,10 @@
    <widget class="QLabel" name="label_manualMode">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>20</x>
       <y>50</y>
-      <width>221</width>
-      <height>16</height>
+      <width>161</width>
+      <height>20</height>
      </rect>
     </property>
     <property name="font">
@@ -341,15 +341,15 @@
      </font>
     </property>
     <property name="text">
-     <string>Manual control mode</string>
+     <string>Tracking control mode</string>
     </property>
    </widget>
    <widget class="QPushButton" name="button_zeroing">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>20</x>
       <y>310</y>
-      <width>141</width>
+      <width>161</width>
       <height>23</height>
      </rect>
     </property>
@@ -466,9 +466,15 @@
      <rect>
       <x>540</x>
       <y>390</y>
-      <width>131</width>
+      <width>141</width>
       <height>21</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="text">
      <string>Manual Controls</string>
@@ -629,6 +635,25 @@
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_zeroingInstructions">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>140</y>
+      <width>161</width>
+      <height>161</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Zeroing instructions:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;1. Use manual controls to set magnets pointing straight up, and linear ruler markers on the outermost ruler tick.&lt;/p&gt;&lt;p&gt;2. Click &amp;quot;Begin zeroing&amp;quot;&lt;/p&gt;&lt;p&gt;3. Click &amp;quot;Reset Field&amp;quot; to begin tracking sliders.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+    </property>
+    <property name="wordWrap">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>
