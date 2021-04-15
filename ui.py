@@ -54,6 +54,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         Ui_MainWindow.__init__(self)
         self.setupUi(self)
         self.setupTimer()
+        self.initTime = time.time() # Helpful in some cases to have a global reference time
 
         # Status flags
         self.isManualControl = False
@@ -83,16 +84,11 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.button_motorC_d_2.clicked.connect(self.motorC_d_2)
         self.button_motorD_l_2.clicked.connect(self.motorD_l_2)
         self.button_motorD_r_2.clicked.connect(self.motorD_r_2)
+        # UI connections - check box
+        self.checkBox_wigglemode.stateChanged.connect(lambda: self.wiggleToggle(self.checkBox_wigglemode))
 
         # Create serial connection
         self.ser = serial.Serial(ARDUINO_PORT, ARDUINO_BAUD, timeout=1)
-
-        # Setup subthreads
-        # self.thread = QThread()
-        # self.wiggle_thread = Thread_Wiggler(self.ser)
-        # self.wiggle_thread.moveToThread(self.thread)
-        # self.thread.started.connect(self.wiggle_thread.run)
-        # self.wiggle_thread.angleSignal.connect(TODO:)
 
         # Variables to track motor position
         self.motor_step_0 = np.array([0., 0., 0., 0.])
@@ -147,7 +143,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
     def toggleDataRecording(self):
         '''
-        sets/unsets data recording flag, so that other periodic functions can know if they're supposed to be recording data or not
+        sets/unsets data recording flag, so that self.update() can know if it's supposed to be recording data or not
         '''
         if not self.isDataRecording:
             datestring = datetime.today().strftime('%Y-%m-%d_%H-%M-%S')
@@ -316,18 +312,19 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         except NameError:
             pass
         else:
-            dataTime = time.time() - self.dataRecordingStarttime
-            self.fout.write(
-                str(round(dataTime, 3)) +
-                ',' +
-                str(self.slider_fieldIntensity.value()) +
-                ',' +
-                str(self.slider_fieldAngle.value()) +
-                ',' +
-                ','.join(self.motor_pos) +
-                ',' +
-                ','.join(limitSwitchStatus) +
-                '\n')
+            if self.isDataRecording:
+                dataTime = time.time() - self.dataRecordingStarttime
+                self.fout.write(
+                    str(round(dataTime, 3)) +
+                    ',' +
+                    str(self.slider_fieldIntensity.value()) +
+                    ',' +
+                    str(self.slider_fieldAngle.value()) +
+                    ',' +
+                    ','.join(self.motor_pos) +
+                    ',' +
+                    ','.join(limitSwitchStatus) +
+                    '\n')
 
 
     def updateReadings(self):
@@ -377,9 +374,28 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                 self.msg_history.pop(0)
         self.output_latestMsg.setPlainText('\n'.join(self.msg_history))
 
-        # Update the field readings from the latest message
-        # self.output_fieldIntensity.setText(str(self.mag[0]))
-        # self.output_fieldAngle.setText(str(self.mag[1]))
+    def wiggleSignal(self):
+        period = 15 #seconds
+        # TODO: Base period on the motor speeds?
+        angle = 85*np.sin((time.time()-self.initTime)/period)
+        self.slider_fieldAngle.setValue(angle)
+        raise NotImplementedError
+
+    def wiggleToggle(self, checkbox):
+        commandTimeResolution = 1000 # milliseconds between timer activations - does not reflect period but rather the command time resolution
+
+        if checkbox.isChecked():
+            # Start timer
+            try:
+                self.wiggleTimer
+            except NameError:
+                # Timer hasn't been created for the first time, create it
+                self.wiggleTimer = QTimer()
+                self.wiggleTimer.timeout.connect(self.wiggleSignal)
+            self.wiggleTimer.start(commandTimeResolution)
+        else:
+            # Stop timer
+            self.wiggleTimer.stop()
 
     def __steps_to_distance(self, steps):
         '''
