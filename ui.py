@@ -145,10 +145,13 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         '''
         sets/unsets data recording flag, so that self.update() can know if it's supposed to be recording data or not
         '''
+        datetime_string = datetime.today().strftime('%Y-%m-%d_%H-%M-%S')
+        time_string = datetime.today().strftime('%H:%M:%S.%f')
+        maxmsglines = 2
+
         if not self.isDataRecording:
-            datestring = datetime.today().strftime('%Y-%m-%d_%H-%M-%S')
-            self.fout = open(f'doublemagdata_{datestring}.txt', 'a')
-            self.fout.write(f'{datestring}\n')
+            self.fout = open(f'doublemagdata_{datetime_string}.txt', 'a')
+            self.fout.write(f'started at {time_string}\n')
 
             headings = [
                 'time (s)',
@@ -163,12 +166,32 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             ]
             self.fout.write(','.join(headings) + '\n')
 
+            # Set data start time so recording loop can record the time column appropriately
             self.dataRecordingStarttime = time.time()
-            self.output_dataRecordingStatus.setText(f'data recording started at: {datestring}')
+
+            # Update the message box
+            new_msg = f'data recording started at: {datetime_string}'
+            txt = output_dataRecordingStatus.toPlainText().split('\n')
+            txt.append(new_msg)
+            if len(txt) > maxmsglines:
+                txt.pop(0)
+            self.output_dataRecordingStatus.setText('\n'.join(txt))
+
+            # Flag to start recording data
             self.isDataRecording = True
         else:
+            # Flag to stop recording data
             self.isDataRecording = False
-            self.output_dataRecordingStatus.setText('stopped recording')
+
+            # Update the message box
+            new_msg = f'{time_string}: stopped recording'
+            txt = output_dataRecordingStatus.toPlainText().split('\n')
+            txt.append(new_msg)
+            if len(txt) > maxmsglines:
+                txt.pop(0)
+            self.output_dataRecordingStatus.setText('\n'.join(txt))
+
+            # Close file
             self.fout.close()
 
     # region Motor manual commands
