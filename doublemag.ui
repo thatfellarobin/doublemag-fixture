@@ -600,22 +600,6 @@
      <string>Start / Stop data recording</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="output_dataRecordingStatus">
-    <property name="geometry">
-     <rect>
-      <x>440</x>
-      <y>150</y>
-      <width>341</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-    <property name="overwriteMode">
-     <bool>false</bool>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_dataRecordingStatus">
     <property name="geometry">
      <rect>
@@ -653,6 +637,19 @@
      <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
     </property>
     <property name="wordWrap">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="output_dataRecordingStatus">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>150</y>
+      <width>341</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="readOnly">
      <bool>true</bool>
     </property>
    </widget>
