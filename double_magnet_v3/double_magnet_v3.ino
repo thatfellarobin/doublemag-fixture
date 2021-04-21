@@ -58,10 +58,10 @@ void setup() {
   // Set up motor settings. These can be tuned to the desired performance.
   Motor_A.setMaxSpeed(1000);
   Motor_A.setAcceleration(500);
-  Motor_B.setMaxSpeed(50);
-  Motor_B.setAcceleration(100);
-  Motor_C.setMaxSpeed(50);
-  Motor_C.setAcceleration(100);
+  Motor_B.setMaxSpeed(150);
+  Motor_B.setAcceleration(200);
+  Motor_C.setMaxSpeed(150);
+  Motor_C.setAcceleration(200);
   Motor_D.setMaxSpeed(1000);
   Motor_D.setAcceleration(500);
 
