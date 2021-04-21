@@ -113,7 +113,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         # send stop signal
         self.sendStop()
 
-        # FIXME: turn off wiggle
+        # Turn off wiggle
+        self.checkBox_wigglemode.setChecked(False)
 
         # lock out controls,
         # prevent sending further field values
@@ -388,10 +389,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.output_latestMsg.setPlainText('\n'.join(self.msg_history))
 
     def wiggleSignal(self):
-        period = 10 #seconds
-        # TODO: Base period on the motor speeds?
+        period = 8 #seconds
 
-        # FIXME: do not do anything if aborted
         angle = 85*np.sin((time.time()-self.initTime)/period)
         self.slider_fieldAngle.setValue(angle)
 
@@ -409,7 +408,12 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             self.wiggleTimer.start(commandTimeResolution)
         else:
             # Stop timer
-            self.wiggleTimer.stop()
+            try:
+                self.wiggleTimer
+            except AttributeError:
+                pass
+            else:
+                self.wiggleTimer.stop()
 
     def __steps_to_distance(self, steps):
         '''
