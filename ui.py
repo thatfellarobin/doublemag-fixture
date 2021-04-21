@@ -40,7 +40,7 @@ MM_PER_REV = 8.0
 SMALL_MANUAL_STEPS_LINEAR = (0.25 / MM_PER_REV) * STEPS_PER_REV
 SMALL_MANUAL_STEPS_ANGULAR = (0.5 / 360) * STEPS_PER_REV
 BIG_MANUAL_STEPS_LINEAR = (5 / MM_PER_REV) * STEPS_PER_REV
-BIG_MANUAL_STEPS_ANGULAR = (1 / 360) * STEPS_PER_REV
+BIG_MANUAL_STEPS_ANGULAR = (5 / 360) * STEPS_PER_REV
 
 class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     # Notes on direction
@@ -58,7 +58,6 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
         # Status flags
         self.isManualControl = False
-        self.isAltControl = False # for subthreads etc. TODO:
         self.isAborted = True
         self.isDataRecording = False
 
@@ -113,6 +112,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def abortMotion(self):
         # send stop signal
         self.sendStop()
+
+        # FIXME: turn off wiggle
 
         # lock out controls,
         # prevent sending further field values
@@ -249,7 +250,6 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         # reset button also resets the control type.
         self.isAborted = False
         self.isManualControl = False
-        self.isAltControl = False
 
     def sendField(self, field, angle):
         '''
@@ -315,11 +315,12 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.timer.start(1000.0/12.0) # milliseconds between updates
 
     def update(self):
+        print(f'in self.update(). isaborted: {self.isAborted}, isManualControl: {self.isManualControl}')
         # Get latest readings
         self.updateReadings()
 
         # Send field commands
-        if not self.isAborted and not self.isManualControl and not self.isAltControl:
+        if not self.isAborted and not self.isManualControl:
             self.sendField(field=self.slider_fieldIntensity.value(), angle=self.slider_fieldAngle.value())
 
         # Update UI
@@ -329,7 +330,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         try:
             self.fout
             self.dataRecordingStarttime
-        except NameError:
+        except AttributeError:
             pass
         else:
             if self.isDataRecording:
@@ -341,9 +342,9 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                     ',' +
                     str(self.slider_fieldAngle.value()) +
                     ',' +
-                    ','.join(self.motor_pos) +
+                    ','.join([str(i) for i in self.motor_pos]) +
                     ',' +
-                    ','.join(limitSwitchStatus) +
+                    ','.join([str(i) for i in self.limitSwitchStatus]) +
                     '\n')
 
     def updateReadings(self):
@@ -355,10 +356,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                 # Assumed message contents:
                 # 0: 'data'
                 # 1-4: step value of motor A, B, C, D
-                # 5: magnetic field magnitude (mT)
-                # 6: magnetic field angle (deg)
-                # 7: 1 or 0 representing limit switch 1
-                # 8: 1 or 0 representing limit switch 2
+                # 5: 1 or 0 representing limit switch 1
+                # 6: 1 or 0 representing limit switch 2
                 try:
                     # Update position
                     self.motor_step[:] = np.array([float(x) for x in incoming_serial_words[1:5]])
@@ -368,12 +367,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                     self.motor_pos[2] = -(self.motor_pos_0[2] + self.__steps_to_angle(stepdiff[2]))
                     self.motor_pos[3] = self.motor_pos_0[3] + self.__steps_to_distance(stepdiff[3])
 
-                    # Update magnetic
-                    # self.mag[0] = incoming_serial_words[5]
-                    # self.mag[1] = incoming_serial_words[6]
-
                     # Update limit switch
-                    self.limitSwitchStatus = [int(x) for x in incoming_serial_words[7:]]
+                    self.limitSwitchStatus = [int(x) for x in incoming_serial_words[4:]]
                 except ValueError:
                     pass
                 except IndexError:
@@ -394,8 +389,10 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.output_latestMsg.setPlainText('\n'.join(self.msg_history))
 
     def wiggleSignal(self):
-        period = 15 #seconds
+        period = 10 #seconds
         # TODO: Base period on the motor speeds?
+
+        # FIXME: do not do anything if aborted
         angle = 85*np.sin((time.time()-self.initTime)/period)
         self.slider_fieldAngle.setValue(angle)
 
@@ -406,7 +403,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             # Start timer
             try:
                 self.wiggleTimer
-            except NameError:
+            except AttributeError:
                 # Timer hasn't been created for the first time, create it
                 self.wiggleTimer = QTimer()
                 self.wiggleTimer.timeout.connect(self.wiggleSignal)
