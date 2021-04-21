@@ -315,7 +315,6 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.timer.start(1000.0/12.0) # milliseconds between updates
 
     def update(self):
-        print(f'in self.update(). isaborted: {self.isAborted}, isManualControl: {self.isManualControl}')
         # Get latest readings
         self.updateReadings()
 
