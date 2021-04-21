@@ -36,10 +36,10 @@ MOTOR_STEPS_PER_REV = 200.0
 STEPS_PER_REV = MICROSTEP_FACTOR * MOTOR_STEPS_PER_REV
 MM_PER_REV = 8.0
 
-MANUAL_STEPS_LINEAR = (5 / MM_PER_REV) * STEPS_PER_REV
-MANUAL_STEPS_ANGULAR = (5 / 360) * STEPS_PER_REV
-BIG_MANUAL_STEPS_LINEAR = (0.25 / MM_PER_REV) * STEPS_PER_REV
-BIG_MANUAL_STEPS_ANGULAR = (0.5 / 360) * STEPS_PER_REV
+SMALL_MANUAL_STEPS_LINEAR = (0.25 / MM_PER_REV) * STEPS_PER_REV
+SMALL_MANUAL_STEPS_ANGULAR = (0.5 / 360) * STEPS_PER_REV
+BIG_MANUAL_STEPS_LINEAR = (5 / MM_PER_REV) * STEPS_PER_REV
+BIG_MANUAL_STEPS_ANGULAR = (1 / 360) * STEPS_PER_REV
 
 class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     # Notes on direction
@@ -281,52 +281,52 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     # region Motor manual commands
     def motorA_l(self):
         self.isManualControl = True
-        self.sendSteps(motor=0, abs_steps=self.motor_step[0] + MANUAL_STEPS_LINEAR)
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] + SMALL_MANUAL_STEPS_LINEAR)
     def motorA_r(self):
         self.isManualControl = True
-        self.sendSteps(motor=0, abs_steps=self.motor_step[0] - MANUAL_STEPS_LINEAR)
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] - SMALL_MANUAL_STEPS_LINEAR)
     def motorB_u(self):
         self.isManualControl = True
-        self.sendSteps(motor=1, abs_steps=self.motor_step[1] - MANUAL_STEPS_ANGULAR)
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] - SMALL_MANUAL_STEPS_ANGULAR)
     def motorB_d(self):
         self.isManualControl = True
-        self.sendSteps(motor=1, abs_steps=self.motor_step[1] + MANUAL_STEPS_ANGULAR)
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] + SMALL_MANUAL_STEPS_ANGULAR)
     def motorC_u(self):
         self.isManualControl = True
-        self.sendSteps(motor=2, abs_steps=self.motor_step[2] + MANUAL_STEPS_ANGULAR)
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] + SMALL_MANUAL_STEPS_ANGULAR)
     def motorC_d(self):
         self.isManualControl = True
-        self.sendSteps(motor=2, abs_steps=self.motor_step[2] - MANUAL_STEPS_ANGULAR)
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] - SMALL_MANUAL_STEPS_ANGULAR)
     def motorD_l(self):
         self.isManualControl = True
-        self.sendSteps(motor=3, abs_steps=self.motor_step[3] - MANUAL_STEPS_LINEAR)
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] - SMALL_MANUAL_STEPS_LINEAR)
     def motorD_r(self):
         self.isManualControl = True
-        self.sendSteps(motor=3, abs_steps=self.motor_step[3] + MANUAL_STEPS_LINEAR)
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] + SMALL_MANUAL_STEPS_LINEAR)
     def motorA_l_2(self):
         self.isManualControl = True
-        self.sendSteps(motor=0, abs_steps=self.motor_step[0] + MANUAL_STEPS_LINEAR)
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] + BIG_MANUAL_STEPS_LINEAR)
     def motorA_r_2(self):
         self.isManualControl = True
-        self.sendSteps(motor=0, abs_steps=self.motor_step[0] - MANUAL_STEPS_LINEAR)
+        self.sendSteps(motor=0, abs_steps=self.motor_step[0] - BIG_MANUAL_STEPS_LINEAR)
     def motorB_u_2(self):
         self.isManualControl = True
-        self.sendSteps(motor=1, abs_steps=self.motor_step[1] - MANUAL_STEPS_ANGULAR)
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] - BIG_MANUAL_STEPS_ANGULAR)
     def motorB_d_2(self):
         self.isManualControl = True
-        self.sendSteps(motor=1, abs_steps=self.motor_step[1] + MANUAL_STEPS_ANGULAR)
+        self.sendSteps(motor=1, abs_steps=self.motor_step[1] + BIG_MANUAL_STEPS_ANGULAR)
     def motorC_u_2(self):
         self.isManualControl = True
-        self.sendSteps(motor=2, abs_steps=self.motor_step[2] + MANUAL_STEPS_ANGULAR)
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] + BIG_MANUAL_STEPS_ANGULAR)
     def motorC_d_2(self):
         self.isManualControl = True
-        self.sendSteps(motor=2, abs_steps=self.motor_step[2] - MANUAL_STEPS_ANGULAR)
+        self.sendSteps(motor=2, abs_steps=self.motor_step[2] - BIG_MANUAL_STEPS_ANGULAR)
     def motorD_l_2(self):
         self.isManualControl = True
-        self.sendSteps(motor=3, abs_steps=self.motor_step[3] - MANUAL_STEPS_LINEAR)
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] - BIG_MANUAL_STEPS_LINEAR)
     def motorD_r_2(self):
         self.isManualControl = True
-        self.sendSteps(motor=3, abs_steps=self.motor_step[3] + MANUAL_STEPS_LINEAR)
+        self.sendSteps(motor=3, abs_steps=self.motor_step[3] + BIG_MANUAL_STEPS_LINEAR)
     # endregion
 
     def __steps_to_distance(self, steps):
