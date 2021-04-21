@@ -171,7 +171,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
             # Update the message box
             new_msg = f'data recording started at: {datetime_string}'
-            txt = output_dataRecordingStatus.toPlainText().split('\n')
+            txt = self.output_dataRecordingStatus.toPlainText().split('\n')
             txt.append(new_msg)
             if len(txt) > maxmsglines:
                 txt.pop(0)
@@ -185,7 +185,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
             # Update the message box
             new_msg = f'{time_string}: stopped recording'
-            txt = output_dataRecordingStatus.toPlainText().split('\n')
+            txt = self.output_dataRecordingStatus.toPlainText().split('\n')
             txt.append(new_msg)
             if len(txt) > maxmsglines:
                 txt.pop(0)
@@ -264,8 +264,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         Replaces send_msg()
         '''
 
-        print(f'field: {field}')
-        print(f'angle: {angle}')
+        print(f'field intensity: {field}, angle: {angle}')
 
         if field > 35 or field < 1:
             print('field out of bounds: {field} mT')
@@ -347,7 +346,6 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                     ','.join(limitSwitchStatus) +
                     '\n')
 
-
     def updateReadings(self):
         try:
             self.new_msg = self.ser.readline().decode().rstrip()
@@ -400,7 +398,6 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         # TODO: Base period on the motor speeds?
         angle = 85*np.sin((time.time()-self.initTime)/period)
         self.slider_fieldAngle.setValue(angle)
-        raise NotImplementedError
 
     def wiggleToggle(self, checkbox):
         commandTimeResolution = 1000 # milliseconds between timer activations - does not reflect period but rather the command time resolution
