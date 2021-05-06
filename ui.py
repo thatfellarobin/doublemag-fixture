@@ -391,7 +391,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def wiggleSignal(self):
         period = 8 #seconds
 
-        angle = 85*np.sin((time.time()-self.initTime)/period)
+        angle = 85*np.sin(2*np.pi*(time.time()-self.initTime)/period)
         self.slider_fieldAngle.setValue(angle)
 
     def wiggleToggle(self, checkbox):
