@@ -616,7 +616,7 @@
     </property>
     <property name="font">
      <font>
-      <family>MS Shell Dlg 2</family>
+      <family>Arial</family>
      </font>
     </property>
     <property name="text">
