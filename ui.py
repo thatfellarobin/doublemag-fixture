@@ -6,7 +6,7 @@ from datetime import datetime
 from scipy.io import loadmat
 
 from PyQt5 import uic
-from PyQt5.QtCore import QTimer, QThread
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QMainWindow
 
 # from subthreads import Thread_Wiggler
