@@ -389,7 +389,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.output_latestMsg.setPlainText('\n'.join(self.msg_history))
 
     def wiggleSignal(self):
-        period = 8 #seconds
+        period = 10 #seconds
 
         angle = 85*np.sin(2*np.pi*(time.time()-self.initTime)/period)
         self.slider_fieldAngle.setValue(angle)
