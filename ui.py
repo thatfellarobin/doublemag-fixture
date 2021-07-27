@@ -21,7 +21,8 @@ MSG_HISTORY_LENGTH = 3
 #=========================================================
 # Serial Info
 #=========================================================
-ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z'
+# ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z' # macOS - Robin's MBP
+ARDUINO_PORT = 'COM8' # Windows - Lab Microscope PC
 ARDUINO_BAUD = 9600
 
 #=========================================================
@@ -121,7 +122,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.isAborted = True
 
     def beginZeroing(self):
-        # Manually navigate to the zeroing point and then hit the zeroing button
+        # User must manually navigate to the zeroing point and then hit the zeroing button
+
         zeroing_point=195
         zeroing_separation=45.75
 
@@ -309,6 +311,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def sendStop(self):
         msg = 's\n'.encode(encoding='ascii')
         self.ser.write(msg)
+        print(f'sent message: {msg}')
 
     def setupTimer(self):
         self.timer = QTimer()
@@ -391,7 +394,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
     def wiggleSignal(self):
         period = 10 #seconds
 
-        angle = 85*np.sin(2*np.pi*(time.time()-self.initTime)/period)
+        angle = 90 + 85*np.sin(2*np.pi*(time.time()-self.initTime)/period)
         self.slider_fieldAngle.setValue(angle)
 
     def wiggleToggle(self, checkbox):
