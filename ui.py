@@ -21,7 +21,8 @@ MSG_HISTORY_LENGTH = 3
 #=========================================================
 # Serial Info
 #=========================================================
-ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z'
+# ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z' # macOS - Robin's MBP
+ARDUINO_PORT = 'COM8' # Windows - Lab Microscope PC
 ARDUINO_BAUD = 9600
 
 #=========================================================
