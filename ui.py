@@ -255,8 +255,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.sendSteps(motor=3, abs_steps=self.motor_step[3] + BIG_MANUAL_STEPS_LINEAR)
 
     def resetField(self):
-        self.slider_fieldAngle.setValue(0.0)
-        self.slider_fieldIntensity.setValue(1.0)
+        self.spinBox_fieldAngle.setValue(0.0)
+        self.spinBox_fieldIntensity.setValue(1.0)
         # reset button also resets the control type.
         self.isAborted = False
         self.isManualControl = False
@@ -331,7 +331,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
         # Send field commands
         if not self.isAborted and not self.isManualControl:
-            self.sendField(field=self.slider_fieldIntensity.value(), angle=self.slider_fieldAngle.value())
+            self.sendField(field=self.spinBox_fieldIntensity.value(), angle=self.spinBox_fieldAngle.value())
 
         # Update UI
         self.updateUI()
@@ -348,9 +348,9 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                 self.fout.write(
                     str(round(dataTime, 3)) +
                     ',' +
-                    str(self.slider_fieldIntensity.value()) +
+                    str(self.spinbox_fieldIntensity.value()) +
                     ',' +
-                    str(self.slider_fieldAngle.value()) +
+                    str(self.spinbox_fieldAngle.value()) +
                     ',' +
                     ','.join([str(i) for i in self.motor_pos]) +
                     ',' +
@@ -387,10 +387,6 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             pass
 
     def updateUI(self):
-        # Update the commanded field readout according to slider position
-        self.input_fieldAngle.setText(str(self.slider_fieldAngle.value()))
-        self.input_fieldIntensity.setText(str(self.slider_fieldIntensity.value()))
-
         # Update the received messages box with latest messages if the new message is unique
         if self.new_msg != self.msg_history[-1]:
             self.msg_history.append(self.new_msg)
@@ -402,10 +398,10 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         period = 10 #seconds
 
         angle = 90 + 85*np.sin(2*np.pi*(time.time()-self.initTime)/period)
-        self.slider_fieldAngle.setValue(angle)
+        self.spinbox_fieldAngle.setValue(angle)
 
     def wiggleToggle(self, checkbox):
-        commandTimeResolution = 1000 # milliseconds between timer activations - does not reflect period but rather the command time resolution
+        commandTimeResolution = 500 # milliseconds between timer activations - does not reflect period but rather the command time resolution
 
         if checkbox.isChecked():
             # Start timer
