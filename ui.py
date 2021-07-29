@@ -21,8 +21,8 @@ MSG_HISTORY_LENGTH = 3
 #=========================================================
 # Serial Info
 #=========================================================
-# ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z' # macOS - Robin's MBP
-ARDUINO_PORT = 'COM8' # Windows - Lab Microscope PC
+ARDUINO_PORT_MAC = '/dev/tty.usbserial-AC00921Z' # macOS - Robin's MBP
+ARDUINO_PORT_WIN = 'COM8' # Windows - Lab Microscope PC
 ARDUINO_BAUD = 9600
 
 #=========================================================
@@ -88,7 +88,8 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.checkBox_wigglemode.stateChanged.connect(lambda: self.wiggleToggle(self.checkBox_wigglemode))
 
         # Create serial connection
-        self.ser = serial.Serial(ARDUINO_PORT, ARDUINO_BAUD, timeout=1)
+        self.connectSerial()
+        
 
         # Variables to track motor position
         self.motor_step_0 = np.array([0., 0., 0., 0.])
@@ -144,6 +145,12 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         print(zeroing_separation)
         print(self.motor_pos_0)
         print(self.motor_step_0)
+
+    def connectSerial(self):
+        try:
+            self.ser = serial.Serial(ARDUINO_PORT_MAC, ARDUINO_BAUD, timeout=1)
+        except serial.serialutil.SerialException:
+            self.ser = serial.Serial(ARDUINO_PORT_WIN, ARDUINO_BAUD, timeout=1)
 
     def toggleDataRecording(self):
         '''
