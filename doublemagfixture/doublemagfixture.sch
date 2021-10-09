@@ -99,8 +99,6 @@ $EndComp
 Wire Wire Line
 	2550 6900 2650 6900
 Connection ~ 2650 6900
-Wire Wire Line
-	2650 6900 2750 6900
 $Comp
 L Motor:Stepper_Motor_bipolar M1
 U 1 1 61693277
@@ -486,8 +484,6 @@ F 3 "" H 9400 2800 50  0001 C CNN
 	1    9400 2800
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	8850 1100 8450 1100
 Wire Wire Line
 	8450 1100 8450 1000
 $Comp
@@ -903,10 +899,10 @@ Connection ~ 4950 2300
 Wire Wire Line
 	4950 2300 4500 2300
 $Comp
-L Motor:Stepper_Motor_bipolar M2
+L Motor:Stepper_Motor_bipolar M3
 U 1 1 619BDAE8
 P 4450 5400
-F 0 "M2" V 4650 5450 50  0000 R CNN
+F 0 "M3" V 4650 5450 50  0000 R CNN
 F 1 "12V_350mA_Stepper_Motor" V 4750 5900 50  0000 R CNN
 F 2 "" H 4460 5390 50  0001 C CNN
 F 3 "http://www.infineon.com/dgdl/Application-Note-TLE8110EE_driving_UniPolarStepperMotor_V1.1.pdf?fileId=db3a30431be39b97011be5d0aa0a00b0" H 4460 5390 50  0001 C CNN
@@ -1023,10 +1019,10 @@ Connection ~ 8300 4900
 Wire Wire Line
 	8300 4900 7850 4900
 $Comp
-L Motor:Stepper_Motor_bipolar M3
+L Motor:Stepper_Motor_bipolar M2
 U 1 1 619CD0F7
 P 7700 2800
-F 0 "M3" V 7900 2850 50  0000 R CNN
+F 0 "M2" V 7900 2850 50  0000 R CNN
 F 1 "12V_350mA_Stepper_Motor" V 8000 3300 50  0000 R CNN
 F 2 "" H 7710 2790 50  0001 C CNN
 F 3 "http://www.infineon.com/dgdl/Application-Note-TLE8110EE_driving_UniPolarStepperMotor_V1.1.pdf?fileId=db3a30431be39b97011be5d0aa0a00b0" H 7710 2790 50  0001 C CNN
@@ -1241,4 +1237,8 @@ F 3 "~" H 700 1200 50  0001 C CNN
 	1    700  1200
 	1    0    0    -1  
 $EndComp
+Wire Wire Line
+	8850 1100 8450 1100
+Wire Wire Line
+	2750 6900 2650 6900
 $EndSCHEMATC
