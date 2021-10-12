@@ -1251,7 +1251,7 @@ Wire Notes Line
 	6650 6100 3850 6100
 Wire Notes Line
 	3850 6100 3850 7650
-Text Notes 1000 7600 0    50   ~ 0
+Text Notes 1000 7550 0    50   ~ 0
 Arduino off-board
 Wire Notes Line
 	3400 7650 3400 4500
