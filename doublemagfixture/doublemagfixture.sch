@@ -1176,15 +1176,14 @@ Wire Wire Line
 Connection ~ 2150 3400
 Wire Wire Line
 	2150 3400 1950 3400
-NoConn ~ 1950 3700
 Text Notes 1650 3300 2    50   ~ 0
-from arduino pin
+from arduino
 Text Notes 1650 3400 2    50   ~ 0
-from arduino pin
+from arduino
 Text Notes 1650 3500 2    50   ~ 0
-to limit switch
+to fixture
 Text Notes 1650 3600 2    50   ~ 0
-to limit switch
+to fixture
 Text Notes 5350 3000 0    50   ~ 0
 to fixture
 Text Notes 5400 5600 0    50   ~ 0
@@ -1261,4 +1260,17 @@ Wire Notes Line
 	900  4500 900  7650
 Wire Notes Line
 	900  7650 3400 7650
+Wire Wire Line
+	1950 3700 2400 3700
+Wire Wire Line
+	2400 3700 2400 3800
+Connection ~ 2400 3800
+Text Notes 1650 3700 2    50   ~ 0
+to fixture
+Text Notes 1650 3100 2    50   ~ 0
+to arduino
+Text Notes 1650 3200 2    50   ~ 0
+from arduino
+Text Notes 1650 3800 2    50   ~ 0
+to arduino
 $EndSCHEMATC

@@ -1,0 +1,417 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title "Double Magnet Fixture - Large Breakout"
+Date "2021-10-12"
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L Connector:Screw_Terminal_01x04 J1
+U 1 1 6165E2CF
+P 1550 4450
+F 0 "J1" V 1422 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 1513 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 1550 4450 50  0001 C CNN
+F 3 "~" H 1550 4450 50  0001 C CNN
+	1    1550 4450
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x04 J11
+U 1 1 616613DD
+P 7650 4450
+F 0 "J11" V 7522 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 7613 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 7650 4450 50  0001 C CNN
+F 3 "~" H 7650 4450 50  0001 C CNN
+	1    7650 4450
+	0    1    1    0   
+$EndComp
+Text Notes 1150 5050 0    50   ~ 0
+Terminals to receive from controller
+Text Notes 6250 5050 0    50   ~ 0
+Terminals to motors 3,4\nand limit switch 2 of 2
+Text Notes 4250 5050 0    50   ~ 0
+Terminals to motors 1,2\nand limit switch 1 of 2
+$Comp
+L Connector:Screw_Terminal_01x04 J9
+U 1 1 61663468
+P 6650 4450
+F 0 "J9" V 6522 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 6613 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 6650 4450 50  0001 C CNN
+F 3 "~" H 6650 4450 50  0001 C CNN
+	1    6650 4450
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x04 J8
+U 1 1 6166A2A4
+P 5600 4450
+F 0 "J8" V 5472 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 5563 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 5600 4450 50  0001 C CNN
+F 3 "~" H 5600 4450 50  0001 C CNN
+	1    5600 4450
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x04 J7
+U 1 1 6166B19C
+P 5100 4450
+F 0 "J7" V 4972 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 5063 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 5100 4450 50  0001 C CNN
+F 3 "~" H 5100 4450 50  0001 C CNN
+	1    5100 4450
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x04 J2
+U 1 1 6166D5A8
+P 2050 4450
+F 0 "J2" V 1922 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 2013 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 2050 4450 50  0001 C CNN
+F 3 "~" H 2050 4450 50  0001 C CNN
+	1    2050 4450
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x04 J3
+U 1 1 6166DCFC
+P 2550 4450
+F 0 "J3" V 2422 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 2513 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 2550 4450 50  0001 C CNN
+F 3 "~" H 2550 4450 50  0001 C CNN
+	1    2550 4450
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x04 J4
+U 1 1 6166E184
+P 3050 4450
+F 0 "J4" V 2922 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 3013 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 3050 4450 50  0001 C CNN
+F 3 "~" H 3050 4450 50  0001 C CNN
+	1    3050 4450
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x04 J5
+U 1 1 6166F0BC
+P 3550 4450
+F 0 "J5" V 3422 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 3513 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 3550 4450 50  0001 C CNN
+F 3 "~" H 3550 4450 50  0001 C CNN
+	1    3550 4450
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x04 J10
+U 1 1 6166FA16
+P 7150 4450
+F 0 "J10" V 7022 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 7113 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 7150 4450 50  0001 C CNN
+F 3 "~" H 7150 4450 50  0001 C CNN
+	1    7150 4450
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x04 J6
+U 1 1 616706AA
+P 4600 4450
+F 0 "J6" V 4472 4630 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 4563 4630 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 4600 4450 50  0001 C CNN
+F 3 "~" H 4600 4450 50  0001 C CNN
+	1    4600 4450
+	0    1    1    0   
+$EndComp
+Text Label 9900 1900 0    50   ~ 0
+motor1_A-
+Text Label 9900 2000 0    50   ~ 0
+motor1_A+
+Text Label 9900 2100 0    50   ~ 0
+motor1_B-
+Text Label 9900 2200 0    50   ~ 0
+motor1_B+
+Text Label 9900 2350 0    50   ~ 0
+motor2_A-
+Text Label 9900 2450 0    50   ~ 0
+motor2_A+
+Text Label 9900 2550 0    50   ~ 0
+motor2_B-
+Text Label 9900 2650 0    50   ~ 0
+motor2_B+
+Text Label 9900 2800 0    50   ~ 0
+motor3_A-
+Text Label 9900 2900 0    50   ~ 0
+motor3_A+
+Text Label 9900 3000 0    50   ~ 0
+motor3_B-
+Text Label 9900 3100 0    50   ~ 0
+motor3_B+
+Text Label 9900 3250 0    50   ~ 0
+motor4_A-
+Text Label 9900 3350 0    50   ~ 0
+motor4_A+
+Text Label 9900 3450 0    50   ~ 0
+motor4_B-
+Text Label 9900 3550 0    50   ~ 0
+motor4_B+
+Text Label 9900 3700 0    50   ~ 0
+lim0
+Text Label 9900 3800 0    50   ~ 0
+lim1
+Wire Wire Line
+	1650 1900 1650 4250
+Wire Wire Line
+	1550 2000 1550 4250
+Wire Wire Line
+	1450 2100 1450 4250
+Wire Wire Line
+	1350 2200 1350 4250
+Wire Wire Line
+	2150 2350 2150 4250
+Wire Wire Line
+	2050 2450 2050 4250
+Wire Wire Line
+	1950 2550 1950 4250
+Wire Wire Line
+	1850 2650 1850 4250
+Wire Wire Line
+	2650 2800 2650 4250
+Wire Wire Line
+	2550 2900 2550 4250
+Wire Wire Line
+	2450 3000 2450 4250
+Wire Wire Line
+	2350 3100 2350 4250
+Wire Wire Line
+	3150 3250 3150 4250
+Wire Wire Line
+	2950 3450 2950 4250
+Wire Wire Line
+	2850 3550 2850 4250
+Wire Wire Line
+	3650 3700 3650 4250
+Wire Wire Line
+	3550 3800 3550 4250
+Wire Wire Line
+	3450 4250 3450 3900
+$Comp
+L power:GND #PWR01
+U 1 1 616A4513
+P 9900 3900
+F 0 "#PWR01" H 9900 3650 50  0001 C CNN
+F 1 "GND" H 9905 3727 50  0000 C CNN
+F 2 "" H 9900 3900 50  0001 C CNN
+F 3 "" H 9900 3900 50  0001 C CNN
+	1    9900 3900
+	1    0    0    -1  
+$EndComp
+Wire Notes Line
+	1100 5100 3900 5100
+Wire Notes Line
+	3900 5100 3900 4150
+Wire Notes Line
+	3900 4150 1100 4150
+Wire Notes Line
+	1100 4150 1100 5100
+Wire Notes Line
+	8000 5100 8000 4150
+Wire Notes Line
+	8000 4150 6200 4150
+Wire Notes Line
+	6200 4150 6200 5100
+Wire Notes Line
+	6200 5100 8000 5100
+Wire Wire Line
+	6750 2800 6750 4250
+Wire Wire Line
+	6650 2900 6650 4250
+Wire Wire Line
+	6550 3000 6550 4250
+Wire Wire Line
+	6450 3100 6450 4250
+Wire Wire Line
+	7250 3250 7250 4250
+Wire Wire Line
+	7150 3350 7150 4250
+Wire Wire Line
+	7050 3450 7050 4250
+Wire Wire Line
+	6950 3550 6950 4250
+Wire Wire Line
+	7750 3800 7750 4250
+Wire Wire Line
+	7650 3900 7650 4250
+NoConn ~ 7550 4250
+NoConn ~ 7450 4250
+NoConn ~ 3350 4250
+Wire Notes Line
+	5900 5100 5900 4150
+Wire Notes Line
+	5900 4150 4200 4150
+Wire Notes Line
+	4200 4150 4200 5100
+Wire Notes Line
+	4200 5100 5900 5100
+Wire Wire Line
+	4700 1900 4700 4250
+Wire Wire Line
+	4600 2000 4600 4250
+Wire Wire Line
+	4500 2100 4500 4250
+Wire Wire Line
+	4400 2200 4400 4250
+Wire Wire Line
+	5200 2350 5200 4250
+Wire Wire Line
+	5100 2450 5100 4250
+Wire Wire Line
+	5000 2550 5000 4250
+Wire Wire Line
+	4900 2650 4900 4250
+Wire Wire Line
+	5700 3700 5700 4250
+Wire Wire Line
+	5600 3900 5600 4250
+NoConn ~ 5500 4250
+NoConn ~ 5400 4250
+Wire Wire Line
+	3450 3900 5600 3900
+Wire Wire Line
+	3650 3700 5700 3700
+Connection ~ 4400 2200
+Wire Wire Line
+	4400 2200 9900 2200
+Connection ~ 4500 2100
+Wire Wire Line
+	4500 2100 9900 2100
+Connection ~ 4600 2000
+Wire Wire Line
+	4600 2000 9900 2000
+Connection ~ 4700 1900
+Wire Wire Line
+	4700 1900 9900 1900
+Connection ~ 4900 2650
+Wire Wire Line
+	4900 2650 9900 2650
+Connection ~ 5000 2550
+Wire Wire Line
+	5000 2550 9900 2550
+Connection ~ 5100 2450
+Wire Wire Line
+	5100 2450 9900 2450
+Connection ~ 5200 2350
+Wire Wire Line
+	5200 2350 9900 2350
+Connection ~ 5600 3900
+Wire Wire Line
+	5600 3900 7650 3900
+Connection ~ 5700 3700
+Wire Wire Line
+	5700 3700 9900 3700
+Connection ~ 6450 3100
+Wire Wire Line
+	6450 3100 9900 3100
+Connection ~ 6550 3000
+Wire Wire Line
+	6550 3000 9900 3000
+Connection ~ 6650 2900
+Wire Wire Line
+	6650 2900 9900 2900
+Connection ~ 6750 2800
+Wire Wire Line
+	6750 2800 9900 2800
+Connection ~ 6950 3550
+Wire Wire Line
+	6950 3550 9900 3550
+Connection ~ 7050 3450
+Wire Wire Line
+	7050 3450 9900 3450
+Connection ~ 7150 3350
+Wire Wire Line
+	7150 3350 9900 3350
+Connection ~ 7250 3250
+Wire Wire Line
+	7250 3250 9900 3250
+Connection ~ 7650 3900
+Wire Wire Line
+	7650 3900 9900 3900
+Connection ~ 7750 3800
+Wire Wire Line
+	7750 3800 9900 3800
+Wire Wire Line
+	3550 3800 7750 3800
+Wire Wire Line
+	1550 2000 4600 2000
+Wire Wire Line
+	1450 2100 4500 2100
+Wire Wire Line
+	1350 2200 4400 2200
+Wire Wire Line
+	1650 1900 4700 1900
+Wire Wire Line
+	2150 2350 5200 2350
+Wire Wire Line
+	2050 2450 5100 2450
+Wire Wire Line
+	1950 2550 5000 2550
+Wire Wire Line
+	1850 2650 4900 2650
+Wire Wire Line
+	2650 2800 6750 2800
+Wire Wire Line
+	2550 2900 6650 2900
+Wire Wire Line
+	2450 3000 6550 3000
+Wire Wire Line
+	2350 3100 6450 3100
+Wire Wire Line
+	3150 3250 7250 3250
+Wire Wire Line
+	3050 3350 3050 4250
+Wire Wire Line
+	3050 3350 7150 3350
+Wire Wire Line
+	2950 3450 7050 3450
+Wire Wire Line
+	2850 3550 6950 3550
+$Comp
+L Mechanical:MountingHole H1
+U 1 1 61781858
+P 9350 4650
+F 0 "H1" H 9450 4696 50  0000 L CNN
+F 1 "MountingHole" H 9450 4605 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.2mm_M3_Pad" H 9350 4650 50  0001 C CNN
+F 3 "~" H 9350 4650 50  0001 C CNN
+	1    9350 4650
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H2
+U 1 1 61783093
+P 9350 4900
+F 0 "H2" H 9450 4946 50  0000 L CNN
+F 1 "MountingHole" H 9450 4855 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.2mm_M3_Pad" H 9350 4900 50  0001 C CNN
+F 3 "~" H 9350 4900 50  0001 C CNN
+	1    9350 4900
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
