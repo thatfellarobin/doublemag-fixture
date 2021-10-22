@@ -23,7 +23,7 @@ MSG_HISTORY_LENGTH = 3
 #=========================================================
 # ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z' # macOS - Robin's MBP
 ARDUINO_PORT = 'COM8' # Windows - Lab Microscope PC
-ARDUINO_BAUD = 9600
+ARDUINO_BAUD = 115200
 
 #=========================================================
 # Magnet Calibration Info
