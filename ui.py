@@ -371,7 +371,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                     self.motor_pos[3] = self.motor_pos_0[3] + self.__steps_to_distance(stepdiff[3])
 
                     # Update limit switch
-                    self.limitSwitchStatus = [int(x) for x in incoming_serial_words[4:]]
+                    self.limitSwitchStatus = [int(x) for x in incoming_serial_words[5:]]
                 except ValueError:
                     pass
                 except IndexError:
