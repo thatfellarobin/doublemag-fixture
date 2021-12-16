@@ -23,7 +23,7 @@ MSG_HISTORY_LENGTH = 3
 #=========================================================
 # ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z' # macOS - Robin's MBP
 ARDUINO_PORT = 'COM8' # Windows - Lab Microscope PC
-ARDUINO_BAUD = 9600
+ARDUINO_BAUD = 115200
 
 #=========================================================
 # Magnet Calibration Info
@@ -371,7 +371,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                     self.motor_pos[3] = self.motor_pos_0[3] + self.__steps_to_distance(stepdiff[3])
 
                     # Update limit switch
-                    self.limitSwitchStatus = [int(x) for x in incoming_serial_words[4:]]
+                    self.limitSwitchStatus = [int(x) for x in incoming_serial_words[5:]]
                 except ValueError:
                     pass
                 except IndexError:
