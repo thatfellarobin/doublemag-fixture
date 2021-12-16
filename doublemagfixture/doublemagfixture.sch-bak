@@ -46,59 +46,45 @@ $EndComp
 $Comp
 L power:+12V #PWR017
 U 1 1 616215E6
-P 2600 4900
-F 0 "#PWR017" H 2600 4750 50  0001 C CNN
-F 1 "+12V" H 2615 5073 50  0000 C CNN
-F 2 "" H 2600 4900 50  0001 C CNN
-F 3 "" H 2600 4900 50  0001 C CNN
-	1    2600 4900
+P 2000 4700
+F 0 "#PWR017" H 2000 4550 50  0001 C CNN
+F 1 "+12V" H 2015 4873 50  0000 C CNN
+F 2 "" H 2000 4700 50  0001 C CNN
+F 3 "" H 2000 4700 50  0001 C CNN
+	1    2000 4700
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:GND #PWR023
 U 1 1 616221D4
-P 2700 7000
-F 0 "#PWR023" H 2700 6750 50  0001 C CNN
-F 1 "GND" H 2705 6827 50  0000 C CNN
-F 2 "" H 2700 7000 50  0001 C CNN
-F 3 "" H 2700 7000 50  0001 C CNN
-	1    2700 7000
+P 2750 6700
+F 0 "#PWR023" H 2750 6450 50  0001 C CNN
+F 1 "GND" H 2755 6527 50  0000 C CNN
+F 2 "" H 2750 6700 50  0001 C CNN
+F 3 "" H 2750 6700 50  0001 C CNN
+	1    2750 6700
 	1    0    0    -1  
 $EndComp
-Text Label 1950 5500 2    50   ~ 0
+Text Label 1350 5300 2    50   ~ 0
 step0
-Text Label 1950 5600 2    50   ~ 0
+Text Label 1350 5400 2    50   ~ 0
 dir0
-Text Label 1950 5700 2    50   ~ 0
+Text Label 1350 5500 2    50   ~ 0
 step1
-Text Label 1950 5800 2    50   ~ 0
+Text Label 1350 5600 2    50   ~ 0
 dir1
-Text Label 1950 5900 2    50   ~ 0
+Text Label 1350 5700 2    50   ~ 0
 step2
-Text Label 1950 6000 2    50   ~ 0
+Text Label 1350 5800 2    50   ~ 0
 dir2
-Text Label 1950 6100 2    50   ~ 0
+Text Label 1350 5900 2    50   ~ 0
 step3
-Text Label 1950 6200 2    50   ~ 0
+Text Label 1350 6000 2    50   ~ 0
 dir3
-Text Label 1950 6300 2    50   ~ 0
+Text Label 1350 6100 2    50   ~ 0
 lim0
-Text Label 1950 6400 2    50   ~ 0
+Text Label 1350 6200 2    50   ~ 0
 lim1
-$Comp
-L MCU_Module:Arduino_UNO_R3 A1
-U 1 1 61645E27
-P 2700 5900
-F 0 "A1" H 2700 4500 50  0000 C CNN
-F 1 "Arduino_UNO_R3" H 2700 4400 50  0000 C CNN
-F 2 "" H 2700 5900 50  0001 C CIN
-F 3 "https://www.arduino.cc/en/Main/arduinoBoardUno" H 2700 5900 50  0001 C CNN
-	1    2700 5900
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	2600 7000 2700 7000
-Connection ~ 2700 7000
 $Comp
 L Motor:Stepper_Motor_bipolar M1
 U 1 1 61693277
@@ -296,21 +282,19 @@ F 3 "" H 6400 7150 50  0001 C CNN
 	1    6400 7150
 	1    0    0    -1  
 $EndComp
-NoConn ~ 2800 4900
-NoConn ~ 3200 5300
-NoConn ~ 3200 5500
-NoConn ~ 3200 5700
-NoConn ~ 3200 5900
-NoConn ~ 3200 6000
-NoConn ~ 3200 6100
-NoConn ~ 3200 6200
-NoConn ~ 3200 6300
-NoConn ~ 3200 6400
-NoConn ~ 3200 6600
-NoConn ~ 3200 6700
-NoConn ~ 2200 5400
-NoConn ~ 2200 5300
-NoConn ~ 2200 6500
+NoConn ~ 2200 4700
+NoConn ~ 2600 5100
+NoConn ~ 2600 5500
+NoConn ~ 2600 5700
+NoConn ~ 2600 5800
+NoConn ~ 2600 5900
+NoConn ~ 2600 6000
+NoConn ~ 2600 6100
+NoConn ~ 2600 6200
+NoConn ~ 2600 6400
+NoConn ~ 1600 5200
+NoConn ~ 1600 5100
+NoConn ~ 1600 6300
 $Comp
 L doublemagfixture-rescue:easydriver_stepper_driver U1
 U 1 1 61845335
@@ -842,7 +826,7 @@ NoConn ~ 8900 4200
 NoConn ~ 10000 5100
 NoConn ~ 8900 4500
 NoConn ~ 8900 4600
-NoConn ~ 2200 6600
+NoConn ~ 1600 6400
 $Comp
 L Connector:Barrel_Jack_MountingPin J1
 U 1 1 618F82D4
@@ -859,12 +843,12 @@ NoConn ~ 6700 5100
 $Comp
 L power:+5V #PWR018
 U 1 1 61622B63
-P 2900 4900
-F 0 "#PWR018" H 2900 4750 50  0001 C CNN
-F 1 "+5V" H 2915 5073 50  0000 C CNN
-F 2 "" H 2900 4900 50  0001 C CNN
-F 3 "" H 2900 4900 50  0001 C CNN
-	1    2900 4900
+P 2300 4700
+F 0 "#PWR018" H 2300 4550 50  0001 C CNN
+F 1 "+5V" H 2315 4873 50  0000 C CNN
+F 2 "" H 2300 4700 50  0001 C CNN
+F 3 "" H 2300 4700 50  0001 C CNN
+	1    2300 4700
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
@@ -1068,121 +1052,27 @@ Connection ~ 8250 2300
 Wire Wire Line
 	8250 2300 7800 2300
 Wire Wire Line
-	1500 5500 2200 5500
+	1350 6100 1600 6100
 Wire Wire Line
-	1500 6200 2200 6200
-Wire Wire Line
-	1950 6300 2200 6300
-Wire Wire Line
-	1950 6400 2200 6400
-$Comp
-L Connector:Screw_Terminal_01x08 J6
-U 1 1 61B05C26
-P 1300 5900
-F 0 "J6" H 1218 6417 50  0000 C CNN
-F 1 "Screw_Terminal_01x08" H 1218 6326 50  0000 C CNN
-F 2 "doublemag:CONN_1x8_3.81mm" H 1300 5900 50  0001 C CNN
-F 3 "~" H 1300 5900 50  0001 C CNN
-	1    1300 5900
-	-1   0    0    -1  
-$EndComp
-Wire Wire Line
-	1500 5600 2200 5600
-Wire Wire Line
-	1500 5700 2200 5700
-Wire Wire Line
-	1500 5800 2200 5800
-Wire Wire Line
-	1500 5900 2200 5900
-Wire Wire Line
-	1500 6000 2200 6000
-Wire Wire Line
-	1500 6100 2200 6100
-$Comp
-L Connector:Screw_Terminal_01x08 J7
-U 1 1 61B866FF
-P 1750 3400
-F 0 "J7" H 1668 3917 50  0000 C CNN
-F 1 "Screw_Terminal_01x08" H 1668 3826 50  0000 C CNN
-F 2 "doublemag:CONN_1x8_3.81mm" H 1750 3400 50  0001 C CNN
-F 3 "~" H 1750 3400 50  0001 C CNN
-	1    1750 3400
-	-1   0    0    -1  
-$EndComp
-Wire Wire Line
-	1950 3100 2400 3100
-Wire Wire Line
-	2400 3100 2400 2950
-$Comp
-L power:+12V #PWR0101
-U 1 1 61BC5CAE
-P 2400 2950
-F 0 "#PWR0101" H 2400 2800 50  0001 C CNN
-F 1 "+12V" H 2415 3123 50  0000 C CNN
-F 2 "" H 2400 2950 50  0001 C CNN
-F 3 "" H 2400 2950 50  0001 C CNN
-	1    2400 2950
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1950 3800 2400 3800
-Wire Wire Line
-	2400 3800 2400 3950
+	1350 6200 1600 6200
 $Comp
 L power:GND #PWR0102
 U 1 1 61BCE94C
-P 2400 3950
-F 0 "#PWR0102" H 2400 3700 50  0001 C CNN
-F 1 "GND" H 2405 3777 50  0000 C CNN
-F 2 "" H 2400 3950 50  0001 C CNN
-F 3 "" H 2400 3950 50  0001 C CNN
-	1    2400 3950
+P 2400 3150
+F 0 "#PWR0102" H 2400 2900 50  0001 C CNN
+F 1 "GND" H 2405 2977 50  0000 C CNN
+F 2 "" H 2400 3150 50  0001 C CNN
+F 3 "" H 2400 3150 50  0001 C CNN
+	1    2400 3150
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	1950 3200 2650 3200
-$Comp
-L power:+5V #PWR0103
-U 1 1 61BD77DD
-P 2650 2950
-F 0 "#PWR0103" H 2650 2800 50  0001 C CNN
-F 1 "+5V" H 2665 3123 50  0000 C CNN
-F 2 "" H 2650 2950 50  0001 C CNN
-F 3 "" H 2650 2950 50  0001 C CNN
-	1    2650 2950
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	2650 2950 2650 3200
-Text Label 2400 3300 0    50   ~ 0
-lim0
-Text Label 2400 3400 0    50   ~ 0
+Text Label 2400 3000 0    50   ~ 0
 lim1
-Wire Wire Line
-	1950 3300 2050 3300
-Wire Wire Line
-	2400 3400 2150 3400
-Wire Wire Line
-	2050 3300 2050 3500
-Wire Wire Line
-	2050 3500 1950 3500
-Connection ~ 2050 3300
-Wire Wire Line
-	2050 3300 2400 3300
-Wire Wire Line
-	2150 3400 2150 3600
-Wire Wire Line
-	2150 3600 1950 3600
-Connection ~ 2150 3400
-Wire Wire Line
-	2150 3400 1950 3400
-Text Notes 1650 3300 2    50   ~ 0
+Text Notes 1850 2800 2    50   ~ 0
 from arduino
-Text Notes 1650 3400 2    50   ~ 0
-from arduino
-Text Notes 1650 3500 2    50   ~ 0
+Text Notes 1850 2900 2    50   ~ 0
 to fixture
-Text Notes 1650 3600 2    50   ~ 0
+Text Notes 1850 3000 2    50   ~ 0
 to fixture
 Text Notes 5350 3000 0    50   ~ 0
 to fixture
@@ -1227,8 +1117,6 @@ F 3 "~" H 700 1200 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	8850 1100 8450 1100
-Wire Wire Line
-	2800 7000 2700 7000
 $Comp
 L Connector:Screw_Terminal_01x04 J2
 U 1 1 6194E9D8
@@ -1250,27 +1138,64 @@ Wire Notes Line
 	6650 6100 3850 6100
 Wire Notes Line
 	3850 6100 3850 7650
-Text Notes 1000 7550 0    50   ~ 0
-Arduino off-board
-Wire Notes Line
-	3400 7650 3400 4500
-Wire Notes Line
-	3400 4500 900  4500
-Wire Notes Line
-	900  4500 900  7650
-Wire Notes Line
-	900  7650 3400 7650
 Wire Wire Line
-	1950 3700 2400 3700
-Wire Wire Line
-	2400 3700 2400 3800
-Connection ~ 2400 3800
-Text Notes 1650 3700 2    50   ~ 0
+	2150 3100 2400 3100
+Text Notes 1850 3100 2    50   ~ 0
 to fixture
-Text Notes 1650 3100 2    50   ~ 0
+Text Notes 1850 3200 2    50   ~ 0
 to arduino
-Text Notes 1650 3200 2    50   ~ 0
-from arduino
-Text Notes 1650 3800 2    50   ~ 0
-to arduino
+Wire Wire Line
+	1350 6000 1600 6000
+Wire Wire Line
+	1350 5900 1600 5900
+Wire Wire Line
+	1600 5800 1350 5800
+Wire Wire Line
+	1350 5700 1600 5700
+Wire Wire Line
+	1600 5600 1350 5600
+Wire Wire Line
+	1350 5500 1600 5500
+Wire Wire Line
+	1600 5400 1350 5400
+Wire Wire Line
+	1350 5300 1600 5300
+$Comp
+L Connector:Screw_Terminal_01x04 J?
+U 1 1 618707E6
+P 1950 3000
+F 0 "J?" V 1822 3180 50  0000 L CNN
+F 1 "Screw_Terminal_01x04" V 1913 3180 50  0000 L CNN
+F 2 "doublemag:CONN_1x4_3.81mm" H 1950 3000 50  0001 C CNN
+F 3 "~" H 1950 3000 50  0001 C CNN
+	1    1950 3000
+	-1   0    0    1   
+$EndComp
+Text Label 2400 2900 0    50   ~ 0
+lim0
+Wire Wire Line
+	2150 2900 2400 2900
+Wire Wire Line
+	2150 3000 2400 3000
+NoConn ~ 2150 2800
+Wire Wire Line
+	2400 3100 2400 3150
+$Comp
+L MCU_Module:Arduino_Nano_v3.x A?
+U 1 1 618D8C77
+P 2100 5700
+F 0 "A?" H 2100 4611 50  0000 C CNN
+F 1 "Arduino_Nano_v3.x" H 2100 4520 50  0000 C CNN
+F 2 "Module:Arduino_Nano" H 2100 5700 50  0001 C CIN
+F 3 "http://www.mouser.com/pdfdocs/Gravitech_Arduino_Nano3_0.pdf" H 2100 5700 50  0001 C CNN
+	1    2100 5700
+	1    0    0    -1  
+$EndComp
+NoConn ~ 2600 5200
+NoConn ~ 2600 6300
+Wire Wire Line
+	2200 6700 2100 6700
+Wire Wire Line
+	2200 6700 2750 6700
+Connection ~ 2200 6700
 $EndSCHEMATC

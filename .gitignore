@@ -133,6 +133,5 @@ dmypy.json
 *.code-workspace
 
 # Project-specific stuff
-*.mat
 test*
 doublemagdata*.txt
