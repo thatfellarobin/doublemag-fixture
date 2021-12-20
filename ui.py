@@ -28,7 +28,12 @@ ARDUINO_BAUD = 115200
 #=========================================================
 # Magnet Calibration Info
 #=========================================================
-MAGNET_CALIB_MATFILE ='two_mag_constangle_field_17.27Am2.mat'
+Z_OFFSET = 35.2 # z-offset in mm, from height of magnet centre to height of sample
+if Z_OFFSET == 0:
+    MAGNET_CALIB_MATFILE = 'two_mag_constangle_field_17.27Am2.mat'
+else:
+    MAGNET_CALIB_MATFILE = f'two_mag_3D_17.27Am2_{Z_OFFSET}mmZoffset.mat'
+
 
 #=========================================================
 # Stepper and Motor Info
@@ -102,10 +107,13 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
         # Load calibration matfile
         matfile = loadmat(MAGNET_CALIB_MATFILE)
-        mat_r = np.squeeze(matfile['r']) * 1000 # Convert m to mm
-        mat_B = np.squeeze(matfile['B_map_norm']) * 1000 # Convert T to mT
-        self.mat_r_rev = np.flip(mat_r) # np.interp requires increasing xp array as per documentation, this is for that case
-        self.mat_B_rev = np.flip(mat_B) # np.interp requires increasing xp array as per documentation, this is for that case
+        if Z_OFFSET == 0:
+            mat_r = np.squeeze(matfile['r']) * 1000 # Convert m to mm
+            mat_B = np.squeeze(matfile['B_map_norm']) * 1000 # Convert T to mT
+            self.mat_r_rev = np.flip(mat_r) # np.interp requires increasing xp array as per documentation, this is for that case
+            self.mat_B_rev = np.flip(mat_B) # np.interp requires increasing xp array as per documentation, this is for that case
+        else:
+            mat_map = np.squeeze(matfile['mag_angles_and_positions'])
 
         self.new_msg = ''
         self.msg_history = ['']
@@ -287,6 +295,40 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             self.sendSteps(motor=1, abs_steps=step_b)
             self.sendSteps(motor=2, abs_steps=step_c)
             self.sendSteps(motor=3, abs_steps=step_d)
+    
+    def sendField_zoffset(self, field, angle):
+        '''
+        Send desired field to arduino, for arduino to control.
+
+            Parameters:
+                field (float): desired magnetic flux intensity (mT)
+                angle (float): desired field angle (deg)
+            Returns:
+                None
+
+        Replaces send_msg()
+        '''
+
+        print(f'field intensity: {field}, angle: {angle}')
+
+        if field > 25 or field < 1:
+            print('field out of bounds: {field} mT')
+        else:
+            desired_r = np.interp(field, self.mat_map[round(field-1)][0], self.mat_r_rev) # use reversed because xp must be increasing as per np.interp documetation
+            print(f'desired r: {desired_r}')
+
+            # Absolute step target - linear axis
+            step_a = self.motor_step_0[0] + self.__distance_to_steps(desired_r - self.motor_pos_0[0])
+            step_d = self.motor_step_0[3] + self.__distance_to_steps(desired_r - self.motor_pos_0[3])
+
+            # Absolute step target - rotational axis
+            step_b = self.motor_step_0[1] + self.__angle_to_steps(angle - self.motor_pos_0[1])
+            step_c = self.motor_step_0[2] - self.__angle_to_steps(angle - self.motor_pos_0[2]) # Subtract because motor c local axis is opposite of global axis
+
+            self.sendSteps(motor=0, abs_steps=step_a)
+            self.sendSteps(motor=1, abs_steps=step_b)
+            self.sendSteps(motor=2, abs_steps=step_c)
+            self.sendSteps(motor=3, abs_steps=step_d)
 
     def sendSteps(self, motor, abs_steps=0):
         '''
@@ -324,7 +366,10 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
 
         # Send field commands
         if not self.isAborted and not self.isManualControl:
-            self.sendField(field=self.slider_fieldIntensity.value(), angle=self.slider_fieldAngle.value())
+            if Z_OFFSET == 0:
+                self.sendField(field=self.slider_fieldIntensity.value(), angle=self.slider_fieldAngle.value())
+            else:
+                self.sendField_zoffset(field=self.slider_fieldIntensity.value(), angle=self.slider_fieldAngle.value())
 
         # Update UI
         self.updateUI()
