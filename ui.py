@@ -295,10 +295,10 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             self.sendSteps(motor=1, abs_steps=step_b)
             self.sendSteps(motor=2, abs_steps=step_c)
             self.sendSteps(motor=3, abs_steps=step_d)
-    
+
     def sendField_zoffset(self, field, angle):
         '''
-        Send desired field to arduino, for arduino to control.
+        Send desired field to arduino, for arduino to control. Considers a non-zero z-offset.
 
             Parameters:
                 field (float): desired magnetic flux intensity (mT)
@@ -314,16 +314,18 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         if field > 25 or field < 1:
             print('field out of bounds: {field} mT')
         else:
-            desired_r = np.interp(field, self.mat_map[round(field-1)][0], self.mat_r_rev) # use reversed because xp must be increasing as per np.interp documetation
-            print(f'desired r: {desired_r}')
+            desired_r = np.interp(field, self.mat_map[round(field-1)][0], self.mat_map[round(field-1)][2])
+            print(f'desired magnet sep: {desired_r}')
+            desired_ang = np.interp(field, self.mat_map[round(field-1)][0], self.mat_map[round(field-1)][1])
+            print(f'desired magnet angle: {desired_ang}')
 
             # Absolute step target - linear axis
             step_a = self.motor_step_0[0] + self.__distance_to_steps(desired_r - self.motor_pos_0[0])
             step_d = self.motor_step_0[3] + self.__distance_to_steps(desired_r - self.motor_pos_0[3])
 
             # Absolute step target - rotational axis
-            step_b = self.motor_step_0[1] + self.__angle_to_steps(angle - self.motor_pos_0[1])
-            step_c = self.motor_step_0[2] - self.__angle_to_steps(angle - self.motor_pos_0[2]) # Subtract because motor c local axis is opposite of global axis
+            step_b = self.motor_step_0[1] + self.__angle_to_steps(desired_ang - self.motor_pos_0[1])
+            step_c = self.motor_step_0[2] - self.__angle_to_steps(desired_ang - self.motor_pos_0[2]) # Subtract because motor c local axis is opposite of global axis
 
             self.sendSteps(motor=0, abs_steps=step_a)
             self.sendSteps(motor=1, abs_steps=step_b)
