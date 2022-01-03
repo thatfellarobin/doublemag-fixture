@@ -314,12 +314,15 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         if field > 25 or field < 1:
             print('field out of bounds: {field} mT')
         else:
-            desired_r = np.interp(field, self.mat_map[round(field-1)][0], self.mat_map[round(field-1)][2])
-            print(f'desired magnet sep: {desired_r}')
-            desired_ang = np.interp(field, self.mat_map[round(field-1)][0], self.mat_map[round(field-1)][1])
+            index = round(field)
+            field = field / 1000 # mat_map is referenced in Teslas and metres
+            desired_r = np.interp(angle, self.mat_map[index-1][0], self.mat_map[index-1][2])
+            print(f'desired magnet sep: {desired_r} m') # mat_map is referenced in metres
+            desired_ang = np.interp(angle, self.mat_map[index-1][0], self.mat_map[index-1][1])
             print(f'desired magnet angle: {desired_ang}')
 
             # Absolute step target - linear axis
+            desired_r = desired_r * 1000 # fixture position referend on mm
             step_a = self.motor_step_0[0] + self.__distance_to_steps(desired_r - self.motor_pos_0[0])
             step_d = self.motor_step_0[3] + self.__distance_to_steps(desired_r - self.motor_pos_0[3])
 
