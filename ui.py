@@ -23,7 +23,7 @@ MSG_HISTORY_LENGTH = 3
 #=========================================================
 # ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z' # macOS - Robin's MBP
 ARDUINO_PORT = 'COM8' # Windows - Lab Microscope PC
-ARDUINO_BAUD = 115200
+ARDUINO_BAUD = 9600
 
 #=========================================================
 # Magnet Calibration Info
@@ -113,7 +113,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
             self.mat_r_rev = np.flip(mat_r) # np.interp requires increasing xp array as per documentation, this is for that case
             self.mat_B_rev = np.flip(mat_B) # np.interp requires increasing xp array as per documentation, this is for that case
         else:
-            mat_map = np.squeeze(matfile['mag_angles_and_positions'])
+            self.mat_map = np.squeeze(matfile['mag_angles_and_positions'])
 
         self.new_msg = ''
         self.msg_history = ['']

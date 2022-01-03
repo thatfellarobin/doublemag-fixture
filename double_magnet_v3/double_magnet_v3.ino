@@ -70,7 +70,7 @@ void setup() {
   pinMode(limitPins[1], INPUT);
 
   // Set up serial
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("Serial ready");
 
   // Start timer
