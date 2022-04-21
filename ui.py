@@ -21,8 +21,9 @@ MSG_HISTORY_LENGTH = 3
 #=========================================================
 # Serial Info
 #=========================================================
+ARDUINO_PORT = '/dev/tty.usbmodem141301' # macOS - Robin's MBP as well (?)
 # ARDUINO_PORT = '/dev/tty.usbserial-AC00921Z' # macOS - Robin's MBP
-ARDUINO_PORT = 'COM8' # Windows - Lab Microscope PC
+# ARDUINO_PORT = 'COM8' # Windows - Lab Microscope PC
 ARDUINO_BAUD = 9600
 
 #=========================================================
@@ -442,13 +443,16 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
         self.output_latestMsg.setPlainText('\n'.join(self.msg_history))
 
     def wiggleSignal(self):
-        period = 10 #seconds
-
-        angle = 90 + 85*np.sin(2*np.pi*(time.time()-self.initTime)/period)
+        if (time.time()*1000) % self.wigglePeriod > self.wigglePeriod / 2:
+            angle = 180
+        else:
+            angle = 0
         self.slider_fieldAngle.setValue(angle)
 
     def wiggleToggle(self, checkbox):
-        commandTimeResolution = 1000 # milliseconds between timer activations - does not reflect period but rather the command time resolution
+        # Warning: this does not produce sinusoidal motion. It's instead a smoothed trapezoidal wave
+        self.wigglePeriod = 7000 # oscillation period in ms
+        self.wiggleSignalResolution = self.wigglePeriod / 10 # milliseconds between timer activations
 
         if checkbox.isChecked():
             # Start timer
@@ -458,7 +462,7 @@ class DoubleMagnetGUI(QMainWindow, Ui_MainWindow):
                 # Timer hasn't been created for the first time, create it
                 self.wiggleTimer = QTimer()
                 self.wiggleTimer.timeout.connect(self.wiggleSignal)
-            self.wiggleTimer.start(commandTimeResolution)
+            self.wiggleTimer.start(self.wiggleSignalResolution)
         else:
             # Stop timer
             try:
